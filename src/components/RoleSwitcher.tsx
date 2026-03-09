@@ -1,4 +1,4 @@
-import { useRole, ROLE_CONFIGS, UserRole } from "@/contexts/RoleContext";
+import { useAuth, ROLE_CONFIGS, UserRole, roleIcons } from "@/contexts/AuthContext";
 import { Shield, ChevronDown } from "lucide-react";
 import {
   DropdownMenu,
@@ -10,16 +10,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 
-const roleIcons: Record<UserRole, string> = {
-  admin: "🔐",
-  data_engineer: "⚙️",
-  data_scientist: "🧠",
-  metier: "📊",
-  conformite: "📋",
-};
-
 const RoleSwitcher = () => {
-  const { currentRole, setCurrentRole, roleConfig } = useRole();
+  const { currentRole, setCurrentRole, roleConfig } = useAuth();
 
   return (
     <DropdownMenu>
@@ -41,7 +33,7 @@ const RoleSwitcher = () => {
           <DropdownMenuItem
             key={key}
             onClick={() => setCurrentRole(key)}
-            className={`flex flex-col items-start gap-1 py-2.5 cursor-pointer ${currentRole === key ? "bg-accent" : ""}`}
+            className={`flex flex-col items-start gap-1 py-2.5 cursor-pointer ${currentRole === key ? "bg-accent/10" : ""}`}
           >
             <div className="flex items-center gap-2 w-full">
               <span>{roleIcons[key]}</span>

@@ -1,9 +1,10 @@
-import { BarChart3, Users, Brain, Settings, TrendingUp, ShieldCheck, LayoutDashboard, Database } from "lucide-react";
+import { BarChart3, Users, Brain, Settings, TrendingUp, ShieldCheck, LayoutDashboard, Database, Lock, Menu, X } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useLocation } from "react-router-dom";
-import { useRole } from "@/contexts/RoleContext";
+import { useAuth } from "@/contexts/AuthContext";
 import logo from "@/assets/logo.png";
-import { Lock } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useState } from "react";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Vue d'ensemble", path: "/" },
@@ -16,12 +17,18 @@ const navItems = [
   { icon: Settings, label: "Paramètres", path: "/parametres" },
 ];
 
-const DashboardSidebar = () => {
+const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => {
   const location = useLocation();
-  const { hasAccess } = useRole();
+  const { hasAccess, user } = useAuth();
+
+  const initials = user?.user_metadata?.full_name
+    ? user.user_metadata.full_name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
+    : "IM";
+
+  const displayName = user?.user_metadata?.full_name || "Ingénieur ML";
 
   return (
-    <aside className="w-64 bg-sidebar text-sidebar-foreground min-h-screen flex flex-col shrink-0">
+    <>
       <div className="p-6 border-b border-sidebar-border">
         <div className="flex items-center gap-2.5">
           <img src={logo} alt="SCB Logo" className="h-8 w-8 object-contain" />
@@ -39,7 +46,10 @@ const DashboardSidebar = () => {
             <NavLink
               key={item.label}
               to={allowed ? item.path : "#"}
-              onClick={(e) => !allowed && e.preventDefault()}
+              onClick={(e) => {
+                if (!allowed) { e.preventDefault(); return; }
+                onNavigate?.();
+              }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                 !allowed
                   ? "text-sidebar-foreground/30 cursor-not-allowed"
@@ -58,16 +68,44 @@ const DashboardSidebar = () => {
       <div className="p-4 border-t border-sidebar-border">
         <div className="flex items-center gap-3">
           <div className="h-8 w-8 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-bold text-sidebar-accent-foreground">
-            IM
+            {initials}
           </div>
-          <div>
-            <p className="text-xs font-medium text-sidebar-primary">Ingénieur ML</p>
-            <p className="text-[10px] text-sidebar-foreground/50">Projet Académique</p>
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-sidebar-primary truncate">{displayName}</p>
+            <p className="text-[10px] text-sidebar-foreground/50 truncate">{user?.email || "Projet Académique"}</p>
           </div>
         </div>
       </div>
-    </aside>
+    </>
   );
 };
 
+// Desktop sidebar
+export const DesktopSidebar = () => (
+  <aside className="hidden lg:flex w-64 bg-sidebar text-sidebar-foreground min-h-screen flex-col shrink-0">
+    <SidebarContent />
+  </aside>
+);
+
+// Mobile sidebar (Sheet)
+export const MobileSidebar = () => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <button className="lg:hidden p-2 rounded-lg hover:bg-muted transition-colors">
+          <Menu size={20} className="text-foreground" />
+        </button>
+      </SheetTrigger>
+      <SheetContent side="left" className="p-0 w-64 bg-sidebar text-sidebar-foreground border-sidebar-border">
+        <div className="flex flex-col h-full">
+          <SidebarContent onNavigate={() => setOpen(false)} />
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+};
+
+const DashboardSidebar = () => <DesktopSidebar />;
 export default DashboardSidebar;

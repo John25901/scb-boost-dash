@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { RoleProvider } from "./contexts/RoleContext";
 import DashboardLayout from "./components/DashboardLayout";
 import Index from "./pages/Index";
 import ExperienceClient from "./pages/ExperienceClient";
@@ -21,21 +22,23 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route element={<DashboardLayout />}>
-            <Route path="/" element={<Index />} />
-            <Route path="/experience-client" element={<ExperienceClient />} />
-            <Route path="/performance-ops" element={<PerformanceOps />} />
-            <Route path="/modeles-ml" element={<ModelesML />} />
-            <Route path="/big-data" element={<BigData />} />
-            <Route path="/rapports" element={<Rapports />} />
-            <Route path="/risques" element={<Risques />} />
-            <Route path="/parametres" element={<Parametres />} />
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <RoleProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route element={<DashboardLayout />}>
+              <Route path="/" element={<Index />} />
+              <Route path="/experience-client" element={<ExperienceClient />} />
+              <Route path="/performance-ops" element={<PerformanceOps />} />
+              <Route path="/modeles-ml" element={<ModelesML />} />
+              <Route path="/big-data" element={<BigData />} />
+              <Route path="/rapports" element={<Rapports />} />
+              <Route path="/risques" element={<Risques />} />
+              <Route path="/parametres" element={<Parametres />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </RoleProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

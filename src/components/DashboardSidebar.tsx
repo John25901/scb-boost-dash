@@ -1,7 +1,9 @@
 import { BarChart3, Users, Brain, Settings, TrendingUp, ShieldCheck, LayoutDashboard, Database } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useLocation } from "react-router-dom";
+import { useRole } from "@/contexts/RoleContext";
 import logo from "@/assets/logo.png";
+import { Lock } from "lucide-react";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Vue d'ensemble", path: "/" },
@@ -16,6 +18,7 @@ const navItems = [
 
 const DashboardSidebar = () => {
   const location = useLocation();
+  const { hasAccess } = useRole();
 
   return (
     <aside className="w-64 bg-sidebar text-sidebar-foreground min-h-screen flex flex-col shrink-0">
@@ -31,18 +34,23 @@ const DashboardSidebar = () => {
       <nav className="flex-1 p-3 space-y-1">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
+          const allowed = hasAccess(item.path);
           return (
             <NavLink
               key={item.label}
-              to={item.path}
+              to={allowed ? item.path : "#"}
+              onClick={(e) => !allowed && e.preventDefault()}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                isActive
+                !allowed
+                  ? "text-sidebar-foreground/30 cursor-not-allowed"
+                  : isActive
                   ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
                   : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground hover:translate-x-0.5"
               }`}
             >
               <item.icon size={18} />
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {!allowed && <Lock size={12} className="text-sidebar-foreground/20" />}
             </NavLink>
           );
         })}

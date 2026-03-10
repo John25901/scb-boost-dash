@@ -1,1 +1,7 @@
 project_id = "tswapzdutjlqdxzcvuas"
+
+[functions.credit-scoring]
+verify_jwt = false
+
+[functions.campaign-suggestions]
+verify_jwt = false

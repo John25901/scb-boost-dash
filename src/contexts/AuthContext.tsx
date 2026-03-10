@@ -79,7 +79,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
   },
 };
 
-const roleIcons: Record<UserRole, string> = {
+export const roleIcons: Record<UserRole, string> = {
   admin: "🔐",
   data_engineer: "⚙️",
   data_scientist: "🧠",
@@ -87,18 +87,13 @@ const roleIcons: Record<UserRole, string> = {
   conformite: "📋",
 };
 
-export { roleIcons };
-
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
   currentRole: UserRole;
-  setCurrentRole: (role: UserRole) => void;
   roleConfig: RoleConfig;
   hasAccess: (path: string) => boolean;
-	isDemo: boolean;
-	setIsDemo: (v: boolean) => void;
   signOut: () => Promise<void>;
 }
 
@@ -108,9 +103,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentRole, setCurrentRole] = useState<UserRole>("admin");
-	const [isDemo, setIsDemo] = useState(true);
-  const [dbRole, setDbRole] = useState<UserRole | null>(null);
+  const [currentRole, setCurrentRole] = useState<UserRole>("metier");
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -123,8 +116,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           supabase.rpc('get_user_role', { _user_id: session.user.id })
             .then(({ data }) => {
               if (data) {
-                setDbRole(data as UserRole);
-								if (!isDemo) setCurrentRole(data as UserRole);
+                setCurrentRole(data as UserRole);
               }
             });
         }, 0);
@@ -151,8 +143,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider value={{
-      user, session, loading, currentRole, setCurrentRole,
-      roleConfig, hasAccess, isDemo, setIsDemo, signOut,
+      user, session, loading, currentRole,
+      roleConfig, hasAccess, signOut,
     }}>
       {children}
     </AuthContext.Provider>
@@ -165,5 +157,4 @@ export const useAuth = () => {
   return ctx;
 };
 
-// Keep backward compat
 export const useRole = useAuth;

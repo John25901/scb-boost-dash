@@ -1,13 +1,13 @@
 import { Outlet, useLocation } from "react-router-dom";
 import DashboardSidebar from "./DashboardSidebar";
 import { MobileSidebar } from "./DashboardSidebar";
-import RoleSwitcher from "./RoleSwitcher";
 import LogoutButton from "./LogoutButton";
-import { Calendar, Lock } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { Calendar, Lock, Shield } from "lucide-react";
+import { useAuth, roleIcons } from "@/contexts/AuthContext";
+import { Badge } from "@/components/ui/badge";
 
 const DashboardLayout = () => {
-  const { hasAccess, roleConfig } = useAuth();
+  const { hasAccess, roleConfig, currentRole } = useAuth();
   const location = useLocation();
   const canAccess = hasAccess(location.pathname);
 
@@ -18,7 +18,11 @@ const DashboardLayout = () => {
         <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b border-border px-4 lg:px-6 py-3 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <MobileSidebar />
-            <RoleSwitcher />
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary text-sm font-medium text-foreground border border-border">
+              <Shield size={14} className="text-primary" />
+              <span className="hidden sm:inline">{roleIcons[currentRole]} {roleConfig.label}</span>
+              <span className="sm:hidden">{roleIcons[currentRole]}</span>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground bg-muted px-3 py-1.5 rounded-lg">

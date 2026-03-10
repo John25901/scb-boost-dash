@@ -14,6 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
+      clients: {
+        Row: {
+          anciennete_mois: number | null
+          code_client: string
+          created_at: string
+          date_naissance: string | null
+          date_ouverture_compte: string
+          email: string | null
+          genre: string
+          id: string
+          montant_credit_en_cours: number | null
+          nom: string
+          nombre_incidents_paiement: number | null
+          nombre_transactions_mois: number | null
+          prenom: string
+          profession: string | null
+          revenu_mensuel: number | null
+          secteur_activite: string | null
+          solde_actuel: number | null
+          statut: string
+          telephone: string | null
+          type_compte: string
+          type_personne: string
+          ville: string | null
+        }
+        Insert: {
+          anciennete_mois?: number | null
+          code_client: string
+          created_at?: string
+          date_naissance?: string | null
+          date_ouverture_compte: string
+          email?: string | null
+          genre: string
+          id?: string
+          montant_credit_en_cours?: number | null
+          nom: string
+          nombre_incidents_paiement?: number | null
+          nombre_transactions_mois?: number | null
+          prenom: string
+          profession?: string | null
+          revenu_mensuel?: number | null
+          secteur_activite?: string | null
+          solde_actuel?: number | null
+          statut?: string
+          telephone?: string | null
+          type_compte: string
+          type_personne: string
+          ville?: string | null
+        }
+        Update: {
+          anciennete_mois?: number | null
+          code_client?: string
+          created_at?: string
+          date_naissance?: string | null
+          date_ouverture_compte?: string
+          email?: string | null
+          genre?: string
+          id?: string
+          montant_credit_en_cours?: number | null
+          nom?: string
+          nombre_incidents_paiement?: number | null
+          nombre_transactions_mois?: number | null
+          prenom?: string
+          profession?: string | null
+          revenu_mensuel?: number | null
+          secteur_activite?: string | null
+          solde_actuel?: number | null
+          statut?: string
+          telephone?: string | null
+          type_compte?: string
+          type_personne?: string
+          ville?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

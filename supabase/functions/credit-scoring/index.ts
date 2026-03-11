@@ -63,7 +63,17 @@ Catégories:
 - Statut: ${client.statut}
 - Ville: ${client.ville}
 - Genre: ${client.genre}
-- Date naissance: ${client.date_naissance || 'N/A'}`;
+- Date naissance: ${client.date_naissance || 'N/A'}
+- Volume MoMo mensuel: ${client.volume_momo_mensuel || 0} FCFA
+- Fréquence MoMo/mois: ${client.frequence_momo_mensuel || 0}
+- Ratio MoMo/bancaire: ${(client.ratio_momo_vs_bancaire || 0) * 100}%
+- Score comportemental: ${client.score_comportemental || 'N/A'}/100
+- Stabilité revenus 6 mois: ${client.stabilite_revenus_6mois ? (client.stabilite_revenus_6mois * 100).toFixed(0) + '%' : 'N/A'}
+- Secteur informel: ${client.secteur_informel ? 'Oui' : 'Non'}
+- Segment RFM: ${client.segment_rfm || 'N/A'}
+- Canal principal: ${client.canal_principal || 'N/A'}
+- Risque churn estimé: ${client.risque_churn ? (client.risque_churn * 100).toFixed(0) + '%' : 'N/A'}
+- Dernière transaction: il y a ${client.derniere_transaction_jours || 0} jours`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

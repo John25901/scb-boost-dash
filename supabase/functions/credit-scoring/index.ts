@@ -31,11 +31,14 @@ Tu dois retourner un JSON avec cette structure exacte (pas de markdown, juste du
 }
 
 Critères de scoring :
-- Ancienneté client (poids: 20%)
-- Revenus mensuels vs crédit en cours (poids: 25%)
-- Historique incidents de paiement (poids: 25%)
-- Solde moyen du compte (poids: 15%)
-- Nombre de transactions (indicateur d'activité) (poids: 15%)
+- Ancienneté client (poids: 15%)
+- Revenus mensuels vs crédit en cours (poids: 20%)
+- Historique incidents de paiement (poids: 20%)
+- Solde moyen du compte (poids: 10%)
+- Nombre de transactions bancaires + MoMo (poids: 10%)
+- Score comportemental MoMo (poids: 10%)
+- Stabilité revenus 6 mois (poids: 10%)
+- Secteur informel et ratio MoMo/bancaire (poids: 5%)
 
 Catégories:
 - 800-1000: Excellent

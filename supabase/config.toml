@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.campaign-suggestions]
 verify_jwt = false
+
+[functions.nps-sentiment]
+verify_jwt = false

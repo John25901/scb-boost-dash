@@ -7,15 +7,17 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import AnimatedPage from "@/components/AnimatedPage";
 import {
-  Search, User, Briefcase, Building2, Calendar, CreditCard, 
+  Search, User, Briefcase, Building2, Calendar, CreditCard,
   TrendingUp, AlertTriangle, CheckCircle2, Loader2, Brain,
-  Phone, Mail, MapPin, Banknote, Activity, ShieldCheck,
-  Target, Lightbulb, Users, Sparkles, ChevronRight
+  Phone, Mail, MapPin, Activity, ShieldCheck,
+  Target, Lightbulb, Users, Sparkles, ChevronRight,
+  Smartphone, Wallet, BarChart3, Zap
 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from "recharts";
 
 interface Client {
   id: string;
@@ -39,6 +41,18 @@ interface Client {
   nombre_incidents_paiement: number;
   anciennete_mois: number;
   statut: string;
+  volume_momo_mensuel: number;
+  frequence_momo_mensuel: number;
+  ratio_momo_vs_bancaire: number;
+  score_nps: number | null;
+  segment_rfm: string;
+  secteur_informel: boolean;
+  canal_principal: string;
+  score_comportemental: number | null;
+  stabilite_revenus_6mois: number | null;
+  duree_onboarding_minutes: number | null;
+  risque_churn: number | null;
+  derniere_transaction_jours: number;
 }
 
 interface CreditScore {
@@ -98,6 +112,18 @@ const prioriteColor = (p: string) => {
   }
 };
 
+const churnColor = (r: number) => r >= 0.7 ? "text-kpi-negative" : r >= 0.4 ? "text-kpi-warning" : "text-kpi-positive";
+const rfmColor = (s: string) => {
+  switch (s) {
+    case "Champion": return "bg-emerald-100 text-emerald-700";
+    case "Fidèle": return "bg-blue-100 text-blue-700";
+    case "Nouveau": return "bg-purple-100 text-purple-700";
+    case "À risque": return "bg-orange-100 text-orange-700";
+    case "Dormant": return "bg-red-100 text-red-700";
+    default: return "bg-secondary text-muted-foreground";
+  }
+};
+
 const ExperienceClient = () => {
   const [searchCode, setSearchCode] = useState("");
   const [client, setClient] = useState<Client | null>(null);
@@ -147,9 +173,7 @@ const ExperienceClient = () => {
     setActiveTab("scoring");
 
     try {
-      const { data, error } = await supabase.functions.invoke("credit-scoring", {
-        body: { client },
-      });
+      const { data, error } = await supabase.functions.invoke("credit-scoring", { body: { client } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       setScoring(data);
@@ -167,13 +191,13 @@ const ExperienceClient = () => {
     setCampaignLoading(true);
     setActiveTab("campaigns");
 
-    // Determine segment
     const age = client.date_naissance
       ? Math.floor((Date.now() - new Date(client.date_naissance).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
       : null;
     const segment = age && age < 30 ? "Jeunes (< 30 ans)"
       : client.genre === "F" ? "Femmes"
       : client.type_personne === "morale" ? "Entreprises/Associations"
+      : client.secteur_informel ? "Secteur Informel"
       : "Général";
 
     try {
@@ -182,16 +206,16 @@ const ExperienceClient = () => {
           segment,
           clients_stats: {
             client_exemple: `${client.prenom} ${client.nom}`,
-            age,
-            genre: client.genre,
-            type_personne: client.type_personne,
-            profession: client.profession,
-            secteur: client.secteur_activite,
-            revenu_mensuel: client.revenu_mensuel,
-            ville: client.ville,
-            type_compte: client.type_compte,
-            anciennete_mois: client.anciennete_mois,
+            age, genre: client.genre, type_personne: client.type_personne,
+            profession: client.profession, secteur: client.secteur_activite,
+            revenu_mensuel: client.revenu_mensuel, ville: client.ville,
+            type_compte: client.type_compte, anciennete_mois: client.anciennete_mois,
             solde_actuel: client.solde_actuel,
+            volume_momo: client.volume_momo_mensuel,
+            ratio_momo: client.ratio_momo_vs_bancaire,
+            secteur_informel: client.secteur_informel,
+            canal_principal: client.canal_principal,
+            segment_rfm: client.segment_rfm,
           },
         },
       });
@@ -209,13 +233,12 @@ const ExperienceClient = () => {
   return (
     <AnimatedPage>
       <div className="p-4 lg:p-6 space-y-6">
-        {/* Header */}
         <div>
           <h1 className="font-display text-xl font-bold text-foreground">Intelligence Client</h1>
-          <p className="text-xs text-muted-foreground">Recherche client, Credit Scoring IA & Suggestions de campagnes d'inclusion</p>
+          <p className="text-xs text-muted-foreground">Recherche client, profil enrichi, Mobile Money, Credit Scoring IA & Campagnes d'inclusion</p>
         </div>
 
-        {/* Search Bar */}
+        {/* Search */}
         <Card className="p-4">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
@@ -235,28 +258,23 @@ const ExperienceClient = () => {
           </div>
         </Card>
 
-        {/* Client found */}
         {client && (
           <div className="space-y-4 animate-fade-in">
-            {/* Tab buttons */}
+            {/* Tabs */}
             <div className="flex gap-2 flex-wrap">
-              {[
+              {([
                 { key: "info" as const, label: "Profil Client", icon: User },
                 { key: "scoring" as const, label: "Credit Scoring IA", icon: Brain },
                 { key: "campaigns" as const, label: "Campagnes Inclusion", icon: Target },
-              ].map((tab) => (
+              ]).map(tab => (
                 <Button
                   key={tab.key}
                   variant={activeTab === tab.key ? "default" : "outline"}
                   size="sm"
                   onClick={() => {
-                    if (tab.key === "scoring" && !scoring && !scoringLoading) {
-                      setShowScoringConfirm(true);
-                    } else if (tab.key === "campaigns" && !campaigns && !campaignLoading) {
-                      setShowCampaignConfirm(true);
-                    } else {
-                      setActiveTab(tab.key);
-                    }
+                    if (tab.key === "scoring" && !scoring && !scoringLoading) setShowScoringConfirm(true);
+                    else if (tab.key === "campaigns" && !campaigns && !campaignLoading) setShowCampaignConfirm(true);
+                    else setActiveTab(tab.key);
                   }}
                 >
                   <tab.icon size={14} className="mr-1.5" />
@@ -267,109 +285,109 @@ const ExperienceClient = () => {
 
             {/* INFO TAB */}
             {activeTab === "info" && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-fade-in">
-                {/* Personal info */}
-                <Card className="p-5 space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      {client.type_personne === "morale" ? <Building2 size={20} className="text-primary" /> : <User size={20} className="text-primary" />}
-                    </div>
-                    <div>
-                      <h3 className="font-display font-semibold text-card-foreground">{client.prenom} {client.nom}</h3>
-                      <p className="text-xs text-muted-foreground">{client.code_client}</p>
-                    </div>
-                    <Badge variant="outline" className="ml-auto">
-                      {client.type_personne === "physique" ? "Personne Physique" : "Personne Morale"}
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                    {client.date_naissance && (
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Calendar size={14} />
-                        <span>Né(e) le {new Date(client.date_naissance).toLocaleDateString("fr-FR")}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <User size={14} />
-                      <span>{client.genre === "M" ? "Homme" : "Femme"}</span>
-                    </div>
-                    {client.profession && (
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Briefcase size={14} />
-                        <span>{client.profession}</span>
-                      </div>
-                    )}
-                    {client.secteur_activite && (
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Building2 size={14} />
-                        <span>{client.secteur_activite}</span>
-                      </div>
-                    )}
-                    {client.email && (
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Mail size={14} />
-                        <span className="truncate">{client.email}</span>
-                      </div>
-                    )}
-                    {client.telephone && (
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Phone size={14} />
-                        <span>{client.telephone}</span>
-                      </div>
-                    )}
-                    {client.ville && (
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <MapPin size={14} />
-                        <span>{client.ville}</span>
-                      </div>
-                    )}
-                  </div>
-                </Card>
+              <div className="space-y-4 animate-fade-in">
+                {/* Quick indicators */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <Card className="p-3 text-center">
+                    <p className="text-[10px] text-muted-foreground">Segment RFM</p>
+                    <Badge className={`mt-1 text-[10px] ${rfmColor(client.segment_rfm)}`}>{client.segment_rfm}</Badge>
+                  </Card>
+                  <Card className="p-3 text-center">
+                    <p className="text-[10px] text-muted-foreground">Risque Churn</p>
+                    <p className={`text-lg font-display font-bold ${churnColor(client.risque_churn || 0)}`}>
+                      {((client.risque_churn || 0) * 100).toFixed(0)}%
+                    </p>
+                  </Card>
+                  <Card className="p-3 text-center">
+                    <p className="text-[10px] text-muted-foreground">Score NPS</p>
+                    <p className="text-lg font-display font-bold text-card-foreground">{client.score_nps ?? "—"}/10</p>
+                  </Card>
+                  <Card className="p-3 text-center">
+                    <p className="text-[10px] text-muted-foreground">Score Comportemental</p>
+                    <p className="text-lg font-display font-bold text-primary">{client.score_comportemental ?? "—"}/100</p>
+                  </Card>
+                </div>
 
-                {/* Account info */}
-                <Card className="p-5 space-y-4">
-                  <h3 className="font-display font-semibold text-card-foreground flex items-center gap-2">
-                    <CreditCard size={16} className="text-primary" />
-                    Informations Compte
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* Personal info */}
+                  <Card className="p-5 space-y-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        {client.type_personne === "morale" ? <Building2 size={20} className="text-primary" /> : <User size={20} className="text-primary" />}
+                      </div>
+                      <div>
+                        <h3 className="font-display font-semibold text-card-foreground">{client.prenom} {client.nom}</h3>
+                        <p className="text-xs text-muted-foreground">{client.code_client}</p>
+                      </div>
+                      <div className="ml-auto flex gap-1.5">
+                        <Badge variant="outline">{client.type_personne === "physique" ? "Personne Physique" : "Personne Morale"}</Badge>
+                        {client.secteur_informel && <Badge className="bg-amber-100 text-amber-700 text-[9px]">Informel</Badge>}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                      {client.date_naissance && (
+                        <div className="flex items-center gap-2 text-muted-foreground"><Calendar size={14} /><span>Né(e) le {new Date(client.date_naissance).toLocaleDateString("fr-FR")}</span></div>
+                      )}
+                      <div className="flex items-center gap-2 text-muted-foreground"><User size={14} /><span>{client.genre === "M" ? "Homme" : "Femme"}</span></div>
+                      {client.profession && <div className="flex items-center gap-2 text-muted-foreground"><Briefcase size={14} /><span>{client.profession}</span></div>}
+                      {client.secteur_activite && <div className="flex items-center gap-2 text-muted-foreground"><Building2 size={14} /><span>{client.secteur_activite}</span></div>}
+                      {client.email && <div className="flex items-center gap-2 text-muted-foreground"><Mail size={14} /><span className="truncate">{client.email}</span></div>}
+                      {client.telephone && <div className="flex items-center gap-2 text-muted-foreground"><Phone size={14} /><span>{client.telephone}</span></div>}
+                      {client.ville && <div className="flex items-center gap-2 text-muted-foreground"><MapPin size={14} /><span>{client.ville}</span></div>}
+                      <div className="flex items-center gap-2 text-muted-foreground"><Zap size={14} /><span>Canal: {client.canal_principal}</span></div>
+                    </div>
+                  </Card>
+
+                  {/* Account info */}
+                  <Card className="p-5 space-y-3">
+                    <h3 className="font-display font-semibold text-card-foreground flex items-center gap-2">
+                      <CreditCard size={16} className="text-primary" /> Informations Compte
+                    </h3>
+                    {[
+                      { label: "Type de compte", value: <Badge>{client.type_compte}</Badge> },
+                      { label: "Date d'ouverture", value: new Date(client.date_ouverture_compte).toLocaleDateString("fr-FR") },
+                      { label: "Ancienneté", value: `${client.anciennete_mois} mois` },
+                      { label: "Solde actuel", value: <span className="font-bold text-primary">{formatCFA(client.solde_actuel)}</span> },
+                      { label: "Revenu mensuel", value: client.revenu_mensuel ? formatCFA(client.revenu_mensuel) : "N/A" },
+                      { label: "TX/mois", value: <span className="flex items-center gap-1"><Activity size={12} /> {client.nombre_transactions_mois}</span> },
+                      { label: "Crédit en cours", value: formatCFA(client.montant_credit_en_cours) },
+                      { label: "Incidents", value: <span className={client.nombre_incidents_paiement > 0 ? "text-destructive font-bold" : "text-kpi-positive font-bold"}>{client.nombre_incidents_paiement}</span> },
+                      { label: "Dern. TX", value: `il y a ${client.derniere_transaction_jours} jours` },
+                      { label: "Stabilité revenus", value: client.stabilite_revenus_6mois ? `${(client.stabilite_revenus_6mois * 100).toFixed(0)}%` : "N/A" },
+                    ].map(item => (
+                      <div key={item.label} className="flex justify-between items-center p-2 bg-muted/50 rounded text-sm">
+                        <span className="text-muted-foreground">{item.label}</span>
+                        <span className="font-medium">{item.value}</span>
+                      </div>
+                    ))}
+                  </Card>
+                </div>
+
+                {/* Mobile Money section */}
+                <Card className="p-5">
+                  <h3 className="font-display font-semibold text-card-foreground flex items-center gap-2 mb-4">
+                    <Smartphone size={16} className="text-primary" /> Données Mobile Money (MoMo / Orange Money)
                   </h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                      <span className="text-sm text-muted-foreground">Type de compte</span>
-                      <Badge>{client.type_compte}</Badge>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="p-3 bg-muted/50 rounded-lg text-center">
+                      <Wallet size={16} className="mx-auto text-primary mb-1" />
+                      <p className="text-[10px] text-muted-foreground">Volume MoMo/mois</p>
+                      <p className="text-sm font-display font-bold text-card-foreground">{formatCFA(client.volume_momo_mensuel)}</p>
                     </div>
-                    <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                      <span className="text-sm text-muted-foreground">Date d'ouverture</span>
-                      <span className="text-sm font-medium">{new Date(client.date_ouverture_compte).toLocaleDateString("fr-FR")}</span>
+                    <div className="p-3 bg-muted/50 rounded-lg text-center">
+                      <Activity size={16} className="mx-auto text-primary mb-1" />
+                      <p className="text-[10px] text-muted-foreground">Fréquence/mois</p>
+                      <p className="text-sm font-display font-bold text-card-foreground">{client.frequence_momo_mensuel} TX</p>
                     </div>
-                    <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                      <span className="text-sm text-muted-foreground">Ancienneté</span>
-                      <span className="text-sm font-medium">{client.anciennete_mois} mois</span>
+                    <div className="p-3 bg-muted/50 rounded-lg text-center">
+                      <BarChart3 size={16} className="mx-auto text-primary mb-1" />
+                      <p className="text-[10px] text-muted-foreground">Ratio MoMo/Bancaire</p>
+                      <p className="text-sm font-display font-bold text-card-foreground">{(client.ratio_momo_vs_bancaire * 100).toFixed(0)}%</p>
                     </div>
-                    <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                      <span className="text-sm text-muted-foreground">Solde actuel</span>
-                      <span className="text-sm font-bold text-primary">{formatCFA(client.solde_actuel)}</span>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                      <span className="text-sm text-muted-foreground">Revenu mensuel</span>
-                      <span className="text-sm font-medium">{client.revenu_mensuel ? formatCFA(client.revenu_mensuel) : "N/A"}</span>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                      <span className="text-sm text-muted-foreground">Transactions/mois</span>
-                      <span className="text-sm font-medium flex items-center gap-1"><Activity size={12} /> {client.nombre_transactions_mois}</span>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                      <span className="text-sm text-muted-foreground">Crédit en cours</span>
-                      <span className="text-sm font-medium">{formatCFA(client.montant_credit_en_cours)}</span>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                      <span className="text-sm text-muted-foreground">Incidents paiement</span>
-                      <span className={`text-sm font-bold ${client.nombre_incidents_paiement > 0 ? "text-destructive" : "text-emerald-600"}`}>
-                        {client.nombre_incidents_paiement}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                      <span className="text-sm text-muted-foreground">Statut</span>
-                      <Badge variant={client.statut === "actif" ? "default" : "destructive"}>{client.statut}</Badge>
+                    <div className="p-3 bg-muted/50 rounded-lg text-center">
+                      <Timer size={16} className="mx-auto text-primary mb-1" />
+                      <p className="text-[10px] text-muted-foreground">Onboarding</p>
+                      <p className="text-sm font-display font-bold text-card-foreground">{client.duree_onboarding_minutes ?? "—"} min</p>
                     </div>
                   </div>
                 </Card>
@@ -386,11 +404,9 @@ const ExperienceClient = () => {
                   </Card>
                 ) : scoring ? (
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    {/* Score Card */}
                     <Card className="p-5 lg:col-span-1 space-y-4">
                       <h3 className="font-display font-semibold text-card-foreground flex items-center gap-2">
-                        <Brain size={16} className="text-primary" />
-                        Score de Crédit
+                        <Brain size={16} className="text-primary" /> Score de Crédit
                       </h3>
                       <div className="text-center space-y-3">
                         <div className={`inline-flex flex-col items-center p-6 rounded-2xl border-2 ${scoreColor(scoring.categorie)}`}>
@@ -415,15 +431,14 @@ const ExperienceClient = () => {
                       </div>
                     </Card>
 
-                    {/* Factors & Features */}
                     <Card className="p-5 lg:col-span-2 space-y-4">
                       <h3 className="font-display font-semibold text-card-foreground">Analyse détaillée</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <p className="text-xs font-medium text-emerald-600 flex items-center gap-1"><CheckCircle2 size={12} /> Facteurs positifs</p>
+                          <p className="text-xs font-medium text-kpi-positive flex items-center gap-1"><CheckCircle2 size={12} /> Facteurs positifs</p>
                           {scoring.facteurs_positifs.map((f, i) => (
                             <p key={i} className="text-xs text-muted-foreground pl-4 flex items-start gap-1">
-                              <ChevronRight size={10} className="mt-0.5 shrink-0 text-emerald-500" /> {f}
+                              <ChevronRight size={10} className="mt-0.5 shrink-0 text-kpi-positive" /> {f}
                             </p>
                           ))}
                         </div>
@@ -437,14 +452,13 @@ const ExperienceClient = () => {
                         </div>
                       </div>
 
-                      {/* Feature importance */}
                       <div className="space-y-2">
-                        <p className="text-xs font-medium text-card-foreground">Importance des Features (Explicabilité IA)</p>
+                        <p className="text-xs font-medium text-card-foreground">Feature Importance (Explicabilité SHAP)</p>
                         {scoring.features_importance?.map((f, i) => (
                           <div key={i} className="flex items-center gap-2 text-xs">
-                            <span className="w-32 truncate text-muted-foreground">{f.feature}</span>
+                            <span className="w-36 truncate text-muted-foreground">{f.feature}</span>
                             <div className="flex-1 bg-muted rounded-full h-2">
-                              <div className={`h-2 rounded-full ${f.impact === "positif" ? "bg-emerald-500" : "bg-red-400"}`}
+                              <div className={`h-2 rounded-full ${f.impact === "positif" ? "bg-kpi-positive" : "bg-kpi-negative"}`}
                                 style={{ width: `${f.importance}%` }} />
                             </div>
                             <span className="w-8 text-right font-medium">{f.importance}%</span>
@@ -461,7 +475,7 @@ const ExperienceClient = () => {
                 ) : (
                   <Card className="p-12 flex flex-col items-center gap-4 text-center">
                     <Brain size={32} className="text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">Cliquez sur l'onglet pour lancer l'analyse de credit scoring IA.</p>
+                    <p className="text-sm text-muted-foreground">Cliquez sur l'onglet pour lancer l'analyse.</p>
                   </Card>
                 )}
               </div>
@@ -527,7 +541,7 @@ const ExperienceClient = () => {
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center gap-2"><Brain size={18} className="text-primary" /> Lancer le Credit Scoring IA ?</AlertDialogTitle>
               <AlertDialogDescription>
-                Le modèle d'IA va analyser le profil de <strong>{client?.prenom} {client?.nom}</strong> et produire un score de crédit détaillé avec explicabilité des features.
+                Le modèle d'IA va analyser le profil de <strong>{client?.prenom} {client?.nom}</strong> incluant les données Mobile Money et le score comportemental.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -542,7 +556,7 @@ const ExperienceClient = () => {
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center gap-2"><Target size={18} className="text-primary" /> Générer des suggestions de campagnes ?</AlertDialogTitle>
               <AlertDialogDescription>
-                L'IA va analyser le segment du client <strong>{client?.prenom} {client?.nom}</strong> et proposer des campagnes d'inclusion financière ciblées (jeunes, femmes, etc.).
+                L'IA va analyser le segment du client <strong>{client?.prenom} {client?.nom}</strong> (MoMo, RFM, secteur informel) et proposer des campagnes d'inclusion ciblées.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -555,5 +569,10 @@ const ExperienceClient = () => {
     </AnimatedPage>
   );
 };
+
+// Timer icon imported from lucide
+const Timer = ({ size = 24, className = "" }: { size?: number; className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/></svg>
+);
 
 export default ExperienceClient;

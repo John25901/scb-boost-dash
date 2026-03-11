@@ -31,11 +31,14 @@ Tu dois retourner un JSON avec cette structure exacte (pas de markdown, juste du
 }
 
 Critères de scoring :
-- Ancienneté client (poids: 20%)
-- Revenus mensuels vs crédit en cours (poids: 25%)
-- Historique incidents de paiement (poids: 25%)
-- Solde moyen du compte (poids: 15%)
-- Nombre de transactions (indicateur d'activité) (poids: 15%)
+- Ancienneté client (poids: 15%)
+- Revenus mensuels vs crédit en cours (poids: 20%)
+- Historique incidents de paiement (poids: 20%)
+- Solde moyen du compte (poids: 10%)
+- Nombre de transactions bancaires + MoMo (poids: 10%)
+- Score comportemental MoMo (poids: 10%)
+- Stabilité revenus 6 mois (poids: 10%)
+- Secteur informel et ratio MoMo/bancaire (poids: 5%)
 
 Catégories:
 - 800-1000: Excellent
@@ -60,7 +63,17 @@ Catégories:
 - Statut: ${client.statut}
 - Ville: ${client.ville}
 - Genre: ${client.genre}
-- Date naissance: ${client.date_naissance || 'N/A'}`;
+- Date naissance: ${client.date_naissance || 'N/A'}
+- Volume MoMo mensuel: ${client.volume_momo_mensuel || 0} FCFA
+- Fréquence MoMo/mois: ${client.frequence_momo_mensuel || 0}
+- Ratio MoMo/bancaire: ${(client.ratio_momo_vs_bancaire || 0) * 100}%
+- Score comportemental: ${client.score_comportemental || 'N/A'}/100
+- Stabilité revenus 6 mois: ${client.stabilite_revenus_6mois ? (client.stabilite_revenus_6mois * 100).toFixed(0) + '%' : 'N/A'}
+- Secteur informel: ${client.secteur_informel ? 'Oui' : 'Non'}
+- Segment RFM: ${client.segment_rfm || 'N/A'}
+- Canal principal: ${client.canal_principal || 'N/A'}
+- Risque churn estimé: ${client.risque_churn ? (client.risque_churn * 100).toFixed(0) + '%' : 'N/A'}
+- Dernière transaction: il y a ${client.derniere_transaction_jours || 0} jours`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

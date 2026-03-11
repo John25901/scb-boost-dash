@@ -17,11 +17,16 @@ export type Database = {
       clients: {
         Row: {
           anciennete_mois: number | null
+          canal_principal: string | null
           code_client: string
+          commentaire_nps: string | null
           created_at: string
           date_naissance: string | null
           date_ouverture_compte: string
+          derniere_transaction_jours: number | null
+          duree_onboarding_minutes: number | null
           email: string | null
+          frequence_momo_mensuel: number | null
           genre: string
           id: string
           montant_credit_en_cours: number | null
@@ -30,22 +35,35 @@ export type Database = {
           nombre_transactions_mois: number | null
           prenom: string
           profession: string | null
+          ratio_momo_vs_bancaire: number | null
           revenu_mensuel: number | null
+          risque_churn: number | null
+          score_comportemental: number | null
+          score_nps: number | null
           secteur_activite: string | null
+          secteur_informel: boolean | null
+          segment_rfm: string | null
           solde_actuel: number | null
+          stabilite_revenus_6mois: number | null
           statut: string
           telephone: string | null
           type_compte: string
           type_personne: string
           ville: string | null
+          volume_momo_mensuel: number | null
         }
         Insert: {
           anciennete_mois?: number | null
+          canal_principal?: string | null
           code_client: string
+          commentaire_nps?: string | null
           created_at?: string
           date_naissance?: string | null
           date_ouverture_compte: string
+          derniere_transaction_jours?: number | null
+          duree_onboarding_minutes?: number | null
           email?: string | null
+          frequence_momo_mensuel?: number | null
           genre: string
           id?: string
           montant_credit_en_cours?: number | null
@@ -54,22 +72,35 @@ export type Database = {
           nombre_transactions_mois?: number | null
           prenom: string
           profession?: string | null
+          ratio_momo_vs_bancaire?: number | null
           revenu_mensuel?: number | null
+          risque_churn?: number | null
+          score_comportemental?: number | null
+          score_nps?: number | null
           secteur_activite?: string | null
+          secteur_informel?: boolean | null
+          segment_rfm?: string | null
           solde_actuel?: number | null
+          stabilite_revenus_6mois?: number | null
           statut?: string
           telephone?: string | null
           type_compte: string
           type_personne: string
           ville?: string | null
+          volume_momo_mensuel?: number | null
         }
         Update: {
           anciennete_mois?: number | null
+          canal_principal?: string | null
           code_client?: string
+          commentaire_nps?: string | null
           created_at?: string
           date_naissance?: string | null
           date_ouverture_compte?: string
+          derniere_transaction_jours?: number | null
+          duree_onboarding_minutes?: number | null
           email?: string | null
+          frequence_momo_mensuel?: number | null
           genre?: string
           id?: string
           montant_credit_en_cours?: number | null
@@ -78,16 +109,68 @@ export type Database = {
           nombre_transactions_mois?: number | null
           prenom?: string
           profession?: string | null
+          ratio_momo_vs_bancaire?: number | null
           revenu_mensuel?: number | null
+          risque_churn?: number | null
+          score_comportemental?: number | null
+          score_nps?: number | null
           secteur_activite?: string | null
+          secteur_informel?: boolean | null
+          segment_rfm?: string | null
           solde_actuel?: number | null
+          stabilite_revenus_6mois?: number | null
           statut?: string
           telephone?: string | null
           type_compte?: string
           type_personne?: string
           ville?: string | null
+          volume_momo_mensuel?: number | null
         }
         Relationships: []
+      }
+      nps_responses: {
+        Row: {
+          canal: string | null
+          client_id: string
+          commentaire: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          score: number
+          sentiment: string | null
+          sentiment_score: number | null
+        }
+        Insert: {
+          canal?: string | null
+          client_id: string
+          commentaire?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          score: number
+          sentiment?: string | null
+          sentiment_score?: number | null
+        }
+        Update: {
+          canal?: string | null
+          client_id?: string
+          commentaire?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          score?: number
+          sentiment?: string | null
+          sentiment_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nps_responses_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {

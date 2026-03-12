@@ -6,7 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import logo from "@/assets/logo.png";
-import { Shield, LogIn, UserPlus, Loader2 } from "lucide-react";
+import { Shield, LogIn, UserPlus, Loader2, Info } from "lucide-react";
+
+const demoAccounts = [
+  { role: "🔐 Admin", email: "admin@scb-demo.cm", pass: "Admin2024!" },
+  { role: "🧠 Data Scientist", email: "ds@scb-demo.cm", pass: "DataSci2024!" },
+  { role: "⚙️ Data Engineer", email: "de@scb-demo.cm", pass: "DataEng2024!" },
+  { role: "📊 Métier", email: "metier@scb-demo.cm", pass: "Metier2024!" },
+  { role: "📋 Conformité", email: "conformite@scb-demo.cm", pass: "Conform2024!" },
+];
 
 const Login = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -14,6 +22,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showDemo, setShowDemo] = useState(false);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,8 +42,9 @@ const Login = () => {
         if (error) throw error;
         toast({
           title: "✅ Compte créé avec succès",
-          description: "Vérifiez votre email pour confirmer votre inscription.",
+          description: "Vous pouvez maintenant vous connecter.",
         });
+        setIsSignUp(false);
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -52,6 +62,12 @@ const Login = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const quickLogin = (demoEmail: string, demoPass: string) => {
+    setEmail(demoEmail);
+    setPassword(demoPass);
+    setIsSignUp(false);
   };
 
   return (
@@ -133,6 +149,37 @@ const Login = () => {
               {isSignUp ? "Déjà un compte ? Se connecter" : "Pas de compte ? S'inscrire"}
             </button>
           </div>
+        </Card>
+
+        {/* Demo accounts */}
+        <Card className="mt-4 p-4">
+          <button
+            onClick={() => setShowDemo(!showDemo)}
+            className="w-full flex items-center justify-between text-xs font-medium text-card-foreground"
+          >
+            <span className="flex items-center gap-1.5">
+              <Info size={14} className="text-primary" />
+              Comptes de démonstration
+            </span>
+            <span className="text-primary">{showDemo ? "Masquer" : "Afficher"}</span>
+          </button>
+          {showDemo && (
+            <div className="mt-3 space-y-1.5">
+              {demoAccounts.map(d => (
+                <button
+                  key={d.email}
+                  onClick={() => quickLogin(d.email, d.pass)}
+                  className="w-full flex items-center justify-between p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-xs"
+                >
+                  <span className="font-medium text-card-foreground">{d.role}</span>
+                  <span className="text-muted-foreground font-mono">{d.email}</span>
+                </button>
+              ))}
+              <p className="text-[9px] text-muted-foreground text-center mt-2">
+                Cliquez sur un compte pour pré-remplir le formulaire
+              </p>
+            </div>
+          )}
         </Card>
 
         <p className="text-center text-[10px] text-muted-foreground mt-6">

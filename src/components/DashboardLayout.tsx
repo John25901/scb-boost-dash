@@ -2,12 +2,12 @@ import { Outlet, useLocation } from "react-router-dom";
 import DashboardSidebar from "./DashboardSidebar";
 import { MobileSidebar } from "./DashboardSidebar";
 import LogoutButton from "./LogoutButton";
-import { Calendar, Lock, Shield } from "lucide-react";
+import { Calendar, Lock, Shield, Loader2 } from "lucide-react";
 import { useAuth, roleIcons } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 
 const DashboardLayout = () => {
-  const { hasAccess, roleConfig, currentRole } = useAuth();
+  const { hasAccess, roleConfig, currentRole, roleLoading } = useAuth();
   const location = useLocation();
   const canAccess = hasAccess(location.pathname);
 
@@ -20,8 +20,14 @@ const DashboardLayout = () => {
             <MobileSidebar />
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary text-sm font-medium text-foreground border border-border">
               <Shield size={14} className="text-primary" />
-              <span className="hidden sm:inline">{roleIcons[currentRole]} {roleConfig.label}</span>
-              <span className="sm:hidden">{roleIcons[currentRole]}</span>
+              {roleLoading ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <>
+                  <span className="hidden sm:inline">{roleIcons[currentRole]} {roleConfig.label}</span>
+                  <span className="sm:hidden">{roleIcons[currentRole]}</span>
+                </>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -32,7 +38,11 @@ const DashboardLayout = () => {
             <LogoutButton />
           </div>
         </header>
-        {canAccess ? (
+        {roleLoading ? (
+          <div className="flex items-center justify-center h-[60vh]">
+            <Loader2 size={32} className="animate-spin text-primary" />
+          </div>
+        ) : canAccess ? (
           <Outlet />
         ) : (
           <div className="flex flex-col items-center justify-center h-[60vh] gap-4 text-center px-6 animate-fade-in">

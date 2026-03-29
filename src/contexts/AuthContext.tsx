@@ -30,7 +30,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
   admin: {
     label: "Administrateur / RSSI",
     description: "Supervision complète, gestion des permissions et clés de chiffrement",
-    allowedPaths: ["/", "/experience-client", "/performance-ops", "/modeles-ml", "/big-data", "/rapports", "/risques", "/parametres"],
+    allowedPaths: ["/", "/porteurs-cartes", "/cycle-vie-cartes", "/audit-facturation", "/performance-tpe", "/experience-client", "/performance-ops", "/modeles-ml", "/big-data", "/rapports", "/risques", "/parametres"],
     permissions: {
       canAccessRawData: false, canTrainModels: false, canManagePipelines: true,
       canViewPredictions: true, canAuditLogs: true, canManageUsers: true,
@@ -40,7 +40,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
   data_engineer: {
     label: "Data Engineer",
     description: "Conception et maintenance des flux d'ingestion (Apache NiFi, Oracle → Data Lakehouse)",
-    allowedPaths: ["/", "/big-data", "/performance-ops", "/parametres"],
+    allowedPaths: ["/", "/porteurs-cartes", "/cycle-vie-cartes", "/performance-tpe", "/big-data", "/performance-ops", "/parametres"],
     permissions: {
       canAccessRawData: true, canTrainModels: false, canManagePipelines: true,
       canViewPredictions: false, canAuditLogs: false, canManageUsers: false,
@@ -50,7 +50,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
   data_scientist: {
     label: "Data Scientist",
     description: "Création et entraînement des modèles ML — données anonymisées uniquement",
-    allowedPaths: ["/", "/modeles-ml", "/experience-client", "/performance-ops"],
+    allowedPaths: ["/", "/porteurs-cartes", "/cycle-vie-cartes", "/modeles-ml", "/experience-client", "/performance-ops"],
     permissions: {
       canAccessRawData: false, canTrainModels: true, canManagePipelines: false,
       canViewPredictions: true, canAuditLogs: false, canManageUsers: false,
@@ -60,7 +60,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
   metier: {
     label: "Utilisateur Métier",
     description: "Consultation en lecture seule des prédictions et tableaux de bord",
-    allowedPaths: ["/", "/experience-client", "/rapports"],
+    allowedPaths: ["/", "/porteurs-cartes", "/audit-facturation", "/performance-tpe", "/experience-client", "/rapports"],
     permissions: {
       canAccessRawData: false, canTrainModels: false, canManagePipelines: false,
       canViewPredictions: true, canAuditLogs: false, canManageUsers: false,
@@ -70,7 +70,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
   conformite: {
     label: "Direction Conformité",
     description: "Audit des accès, traçabilité et explicabilité des modèles IA",
-    allowedPaths: ["/", "/risques", "/rapports", "/modeles-ml"],
+    allowedPaths: ["/", "/audit-facturation", "/risques", "/rapports", "/modeles-ml"],
     permissions: {
       canAccessRawData: false, canTrainModels: false, canManagePipelines: false,
       canViewPredictions: true, canAuditLogs: true, canManageUsers: false,

@@ -133,21 +133,67 @@ const useCases = [
     label: "RPA + ML Back-office",
     icon: Cog,
     tech: "Process Mining, Classification",
-    impact: "–20% charges opéx",
+    impact: "-20% charges opex",
     priorite: "Faible",
     status: "PoC",
     description: "Automatisation des processus back-office via Process Mining pour identifier les goulots et prioriser l'automatisation.",
     metrics: { precision: 89.5, rappel: 86.2, f1: 87.8, auc: 0.91 },
     features: [
-      { feature: "Temps cycle processus", importance: 28, impact: "négatif" },
-      { feature: "Taux erreur manuelle", importance: 24, impact: "négatif" },
-      { feature: "Volume répétitions", importance: 20, impact: "négatif" },
-      { feature: "Complexité workflow", importance: 16, impact: "négatif" },
-      { feature: "Coût par transaction", importance: 12, impact: "négatif" },
+      { feature: "Temps cycle processus", importance: 28, impact: "negatif" },
+      { feature: "Taux erreur manuelle", importance: 24, impact: "negatif" },
+      { feature: "Volume repetitions", importance: 20, impact: "negatif" },
+      { feature: "Complexite workflow", importance: 16, impact: "negatif" },
+      { feature: "Cout par transaction", importance: 12, impact: "negatif" },
     ],
     confusion: { tp: 675, fp: 78, fn: 108, tn: 5139 },
     rocData: Array.from({ length: 20 }, (_, i) => ({
       fpr: i / 20, tpr: Math.min(1, (i / 20) ** 0.38), random: i / 20,
+    })),
+  },
+  {
+    id: "churn_carte",
+    label: "Churn Porteur Carte",
+    icon: TrendingUp,
+    tech: "Gradient Boosting, Survival Analysis",
+    impact: "-8% resiliations cartes",
+    priorite: "Elevee",
+    status: "Production",
+    description: "Prediction de la resilisation de carte bancaire. Le modele combine l'analyse de survie (Cox PH) avec du Gradient Boosting pour estimer la probabilite de resilisation a 3 et 6 mois.",
+    metrics: { precision: 91.8, rappel: 87.5, f1: 89.6, auc: 0.95 },
+    features: [
+      { feature: "Jours sans TX carte", importance: 32, impact: "negatif" },
+      { feature: "Ratio paiement/retrait", importance: 22, impact: "positif" },
+      { feature: "Nb TX internationales", importance: 18, impact: "positif" },
+      { feature: "Anciennete carte (mois)", importance: 14, impact: "positif" },
+      { feature: "Frais cumules payes", importance: 8, impact: "negatif" },
+      { feature: "Utilisation e-commerce", importance: 6, impact: "positif" },
+    ],
+    confusion: { tp: 785, fp: 68, fn: 112, tn: 5035 },
+    rocData: Array.from({ length: 20 }, (_, i) => ({
+      fpr: i / 20, tpr: Math.min(1, (i / 20) ** 0.28), random: i / 20,
+    })),
+  },
+  {
+    id: "fraude_carte",
+    label: "Fraude Carte (Temps Reel)",
+    icon: ShieldCheck,
+    tech: "Autoencoder + Rules Engine",
+    impact: "-72% fraudes non detectees",
+    priorite: "Elevee",
+    status: "Production",
+    description: "Detection de fraude carte en temps reel combinant un Autoencoder pour la detection d'anomalies avec un moteur de regles metier (montant inhabituel, geo-velocite, merchant category).",
+    metrics: { precision: 96.5, rappel: 92.8, f1: 94.6, auc: 0.99 },
+    features: [
+      { feature: "Geo-velocite (km/h)", importance: 28, impact: "negatif" },
+      { feature: "Montant vs historique", importance: 24, impact: "negatif" },
+      { feature: "MCC inhabituel", importance: 18, impact: "negatif" },
+      { feature: "Heure TX (nuit)", importance: 15, impact: "negatif" },
+      { feature: "Nb TX rapprochees", importance: 10, impact: "negatif" },
+      { feature: "Pays != domicile", importance: 5, impact: "negatif" },
+    ],
+    confusion: { tp: 928, fp: 34, fn: 72, tn: 8966 },
+    rocData: Array.from({ length: 20 }, (_, i) => ({
+      fpr: i / 20, tpr: Math.min(1, (i / 20) ** 0.1), random: i / 20,
     })),
   },
 ];
@@ -178,16 +224,16 @@ const ModelesML = () => {
       <div className="p-4 lg:p-6 space-y-6">
         <div>
           <h1 className="font-display text-xl font-bold text-foreground">Modèles Machine Learning</h1>
-          <p className="text-xs text-muted-foreground">6 cas d'usage stratégiques — Performance, SHAP, matrices de confusion & ROC</p>
+          <p className="text-xs text-muted-foreground">8 cas d'usage strategiques — Performance, SHAP, matrices de confusion & ROC</p>
         </div>
 
         {/* KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: "Modèles Production", value: "4", icon: Brain },
-            { label: "AUC Moyen", value: "0.95", icon: Target },
-            { label: "Cas d'usage", value: "6", icon: Layers },
-            { label: "Pipelines Actifs", value: "8", icon: GitBranch },
+            { label: "Modeles Production", value: "6", icon: Brain },
+            { label: "AUC Moyen", value: "0.96", icon: Target },
+            { label: "Cas d'usage", value: "8", icon: Layers },
+            { label: "Pipelines Actifs", value: "12", icon: GitBranch },
           ].map(s => (
             <Card key={s.label} className="p-3 flex items-center gap-3">
               <div className="h-9 w-9 rounded-lg bg-secondary flex items-center justify-center">
@@ -296,24 +342,67 @@ const ModelesML = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Confusion Matrix */}
+          {/* Enhanced Confusion Matrix Heatmap */}
           <Card className="p-5">
             <h3 className="font-display font-semibold text-card-foreground mb-1">Matrice de Confusion</h3>
             <p className="text-xs text-muted-foreground mb-4">
               {(selected.confusion.tp + selected.confusion.fp + selected.confusion.fn + selected.confusion.tn).toLocaleString()} observations
             </p>
-            <div className="grid grid-cols-2 gap-2 max-w-sm mx-auto">
-              {[
-                { label: "Vrai Positif", value: selected.confusion.tp, positive: true },
-                { label: "Faux Positif", value: selected.confusion.fp, positive: false },
-                { label: "Faux Négatif", value: selected.confusion.fn, positive: false },
-                { label: "Vrai Négatif", value: selected.confusion.tn, positive: true },
-              ].map((cell, i) => (
-                <div key={i} className={`p-5 rounded-lg text-center ${cell.positive ? "bg-kpi-positive/10" : "bg-kpi-negative/10"}`}>
-                  <p className="text-2xl font-display font-bold text-card-foreground">{cell.value.toLocaleString()}</p>
-                  <p className="text-[9px] text-muted-foreground mt-1">{cell.label}</p>
+            <div className="max-w-sm mx-auto">
+              {/* Axis labels */}
+              <div className="flex items-center justify-center mb-2">
+                <span className="text-[10px] text-muted-foreground font-medium">Predit</span>
+              </div>
+              <div className="flex">
+                <div className="flex items-center mr-2">
+                  <span className="text-[10px] text-muted-foreground font-medium writing-mode-vertical" style={{ writingMode: "vertical-lr", transform: "rotate(180deg)" }}>Reel</span>
                 </div>
-              ))}
+                <div className="flex-1">
+                  <div className="grid grid-cols-2 gap-0.5 text-center mb-1">
+                    <span className="text-[9px] text-muted-foreground">Positif</span>
+                    <span className="text-[9px] text-muted-foreground">Negatif</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1">
+                    <div className="p-4 rounded-lg text-center bg-kpi-positive/20 border-2 border-kpi-positive/30">
+                      <p className="text-2xl font-display font-bold text-kpi-positive">{selected.confusion.tp.toLocaleString()}</p>
+                      <p className="text-[9px] text-muted-foreground mt-1">VP (Vrais Positifs)</p>
+                    </div>
+                    <div className="p-4 rounded-lg text-center bg-kpi-negative/10 border border-kpi-negative/20">
+                      <p className="text-2xl font-display font-bold text-kpi-negative">{selected.confusion.fp.toLocaleString()}</p>
+                      <p className="text-[9px] text-muted-foreground mt-1">FP (Faux Positifs)</p>
+                    </div>
+                    <div className="p-4 rounded-lg text-center bg-kpi-negative/10 border border-kpi-negative/20">
+                      <p className="text-2xl font-display font-bold text-kpi-negative">{selected.confusion.fn.toLocaleString()}</p>
+                      <p className="text-[9px] text-muted-foreground mt-1">FN (Faux Negatifs)</p>
+                    </div>
+                    <div className="p-4 rounded-lg text-center bg-kpi-positive/20 border-2 border-kpi-positive/30">
+                      <p className="text-2xl font-display font-bold text-kpi-positive">{selected.confusion.tn.toLocaleString()}</p>
+                      <p className="text-[9px] text-muted-foreground mt-1">VN (Vrais Negatifs)</p>
+                    </div>
+                  </div>
+                  {/* Derived metrics */}
+                  <div className="grid grid-cols-3 gap-2 mt-3">
+                    <div className="p-2 bg-muted/50 rounded text-center">
+                      <p className="text-[9px] text-muted-foreground">Accuracy</p>
+                      <p className="text-xs font-bold text-card-foreground">
+                        {(((selected.confusion.tp + selected.confusion.tn) / (selected.confusion.tp + selected.confusion.fp + selected.confusion.fn + selected.confusion.tn)) * 100).toFixed(1)}%
+                      </p>
+                    </div>
+                    <div className="p-2 bg-muted/50 rounded text-center">
+                      <p className="text-[9px] text-muted-foreground">Specificite</p>
+                      <p className="text-xs font-bold text-card-foreground">
+                        {((selected.confusion.tn / (selected.confusion.tn + selected.confusion.fp)) * 100).toFixed(1)}%
+                      </p>
+                    </div>
+                    <div className="p-2 bg-muted/50 rounded text-center">
+                      <p className="text-[9px] text-muted-foreground">Sensibilite</p>
+                      <p className="text-xs font-bold text-card-foreground">
+                        {((selected.confusion.tp / (selected.confusion.tp + selected.confusion.fn)) * 100).toFixed(1)}%
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </Card>
 
@@ -339,7 +428,7 @@ const ModelesML = () => {
 
         {/* Comparison table */}
         <Card className="p-5 overflow-x-auto">
-          <h3 className="font-display font-semibold text-card-foreground mb-4">Tableau Comparatif — 6 Cas d'usage</h3>
+          <h3 className="font-display font-semibold text-card-foreground mb-4">Tableau Comparatif — 8 Cas d'usage</h3>
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-xs text-muted-foreground">

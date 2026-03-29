@@ -1,4 +1,4 @@
-import { BarChart3, Users, Brain, Settings, TrendingUp, ShieldCheck, LayoutDashboard, Database, Lock, Menu, X } from "lucide-react";
+import { BarChart3, Users, Brain, Settings, TrendingUp, ShieldCheck, LayoutDashboard, Database, Lock, Menu, CreditCard, Package, Receipt, Monitor } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +8,10 @@ import { useState } from "react";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Vue d'ensemble", path: "/" },
+  { icon: CreditCard, label: "Porteurs Cartes", path: "/porteurs-cartes" },
+  { icon: Package, label: "Cycle Vie Cartes", path: "/cycle-vie-cartes" },
+  { icon: Receipt, label: "Audit & Facturation", path: "/audit-facturation" },
+  { icon: Monitor, label: "Performance TPE", path: "/performance-tpe" },
   { icon: Users, label: "Expérience Client", path: "/experience-client" },
   { icon: TrendingUp, label: "Performance Ops.", path: "/performance-ops" },
   { icon: Brain, label: "Modèles ML", path: "/modeles-ml" },
@@ -38,7 +42,7 @@ const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => {
           </div>
         </div>
       </div>
-      <nav className="flex-1 p-3 space-y-1">
+      <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           const allowed = hasAccess(item.path);
@@ -50,7 +54,7 @@ const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => {
                 if (!allowed) { e.preventDefault(); return; }
                 onNavigate?.();
               }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-200 ${
                 !allowed
                   ? "text-sidebar-foreground/30 cursor-not-allowed"
                   : isActive
@@ -58,8 +62,8 @@ const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => {
                   : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground hover:translate-x-0.5"
               }`}
             >
-              <item.icon size={18} />
-              <span className="flex-1">{item.label}</span>
+              <item.icon size={16} />
+              <span className="flex-1 truncate">{item.label}</span>
               {!allowed && <Lock size={12} className="text-sidebar-foreground/20" />}
             </NavLink>
           );

@@ -13,6 +13,10 @@ import BigData from "./pages/BigData";
 import Rapports from "./pages/Rapports";
 import Risques from "./pages/Risques";
 import Parametres from "./pages/Parametres";
+import PorteursCartes from "./pages/PorteursCartes";
+import CycleVieCartes from "./pages/CycleVieCartes";
+import AuditFacturation from "./pages/AuditFacturation";
+import PerformanceTPE from "./pages/PerformanceTPE";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
@@ -35,6 +39,10 @@ const ProtectedRoutes = () => {
     <Routes>
       <Route element={<DashboardLayout />}>
         <Route path="/" element={<Index />} />
+        <Route path="/porteurs-cartes" element={<PorteursCartes />} />
+        <Route path="/cycle-vie-cartes" element={<CycleVieCartes />} />
+        <Route path="/audit-facturation" element={<AuditFacturation />} />
+        <Route path="/performance-tpe" element={<PerformanceTPE />} />
         <Route path="/experience-client" element={<ExperienceClient />} />
         <Route path="/performance-ops" element={<PerformanceOps />} />
         <Route path="/modeles-ml" element={<ModelesML />} />

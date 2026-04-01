@@ -194,7 +194,7 @@ const ExperienceClient = () => {
   const [showScoringConfirm, setShowScoringConfirm] = useState(false);
   const [showCampaignConfirm, setShowCampaignConfirm] = useState(false);
   const [showLaunchConfirm, setShowLaunchConfirm] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<"info" | "scoring" | "campaigns" | "segment">("info");
+  const [activeTab, setActiveTab] = useState<"info" | "scoring" | "campaigns" | "segment" | "response_codes">("info");
   const { toast } = useToast();
 
   // Segment analysis state

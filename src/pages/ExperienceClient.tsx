@@ -7,13 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AnimatedPage from "@/components/AnimatedPage";
+import ExportToolbar from "@/components/ExportToolbar";
 import {
   Search, User, Briefcase, Building2, Calendar, CreditCard,
   TrendingUp, AlertTriangle, CheckCircle2, Loader2, Brain,
   Phone, Mail, MapPin, Activity, ShieldCheck,
   Target, Lightbulb, Users, Sparkles, ChevronRight,
   Smartphone, Wallet, BarChart3, Zap, Send, Filter,
-  Megaphone, MessageSquare
+  Megaphone, MessageSquare, XCircle
 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -154,6 +155,34 @@ const CHART_ATTRIBUTES = [
   { value: "revenu_mensuel", label: "Revenu mensuel" },
 ];
 
+// === RESPONSE CODES (Motifs d'échec TX) ===
+const responseCodesData = [
+  { code: "00", libelle: "Transaction approuvée", count: 485200, pct: 87.2, categorie: "Succès" },
+  { code: "51", libelle: "Fonds insuffisants", count: 28400, pct: 5.1, categorie: "Échec Client" },
+  { code: "05", libelle: "Ne pas honorer", count: 12800, pct: 2.3, categorie: "Échec Banque" },
+  { code: "14", libelle: "Numéro de carte invalide", count: 8500, pct: 1.5, categorie: "Échec Client" },
+  { code: "54", libelle: "Carte expirée", count: 6200, pct: 1.1, categorie: "Échec Client" },
+  { code: "61", libelle: "Dépassement plafond retrait", count: 5800, pct: 1.0, categorie: "Limite" },
+  { code: "91", libelle: "Émetteur indisponible", count: 3200, pct: 0.6, categorie: "Technique" },
+  { code: "96", libelle: "Dysfonctionnement système", count: 2100, pct: 0.4, categorie: "Technique" },
+  { code: "41", libelle: "Carte perdue", count: 1800, pct: 0.3, categorie: "Fraude" },
+  { code: "43", libelle: "Carte volée", count: 1200, pct: 0.2, categorie: "Fraude" },
+  { code: "65", libelle: "Dépassement nb retraits", count: 980, pct: 0.2, categorie: "Limite" },
+  { code: "03", libelle: "Commerçant invalide", count: 650, pct: 0.1, categorie: "Technique" },
+];
+
+const rcCategorieColor = (cat: string) => {
+  switch (cat) {
+    case "Succès": return "bg-kpi-positive/10 text-kpi-positive";
+    case "Échec Client": return "bg-kpi-warning/10 text-kpi-warning";
+    case "Échec Banque": return "bg-kpi-negative/10 text-kpi-negative";
+    case "Technique": return "bg-primary/10 text-primary";
+    case "Fraude": return "bg-destructive/10 text-destructive";
+    case "Limite": return "bg-secondary text-secondary-foreground";
+    default: return "bg-muted text-muted-foreground";
+  }
+};
+
 const ExperienceClient = () => {
   const [searchCode, setSearchCode] = useState("");
   const [client, setClient] = useState<Client | null>(null);
@@ -165,7 +194,7 @@ const ExperienceClient = () => {
   const [showScoringConfirm, setShowScoringConfirm] = useState(false);
   const [showCampaignConfirm, setShowCampaignConfirm] = useState(false);
   const [showLaunchConfirm, setShowLaunchConfirm] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<"info" | "scoring" | "campaigns" | "segment">("info");
+  const [activeTab, setActiveTab] = useState<"info" | "scoring" | "campaigns" | "segment" | "response_codes">("info");
   const { toast } = useToast();
 
   // Segment analysis state
@@ -414,7 +443,8 @@ const ExperienceClient = () => {
               { key: "scoring" as const, label: "Credit Scoring IA", icon: Brain },
               { key: "campaigns" as const, label: "Campagnes Inclusion", icon: Target },
             ] : []),
-            { key: "segment" as const, label: "Analyse par Segment", icon: Users },
+          { key: "segment" as const, label: "Analyse par Segment", icon: Users },
+            { key: "response_codes" as const, label: "Response Codes", icon: XCircle },
           ]).map(tab => (
             <Button
               key={tab.key}
@@ -934,7 +964,86 @@ const ExperienceClient = () => {
           </div>
         )}
 
-        {/* Confirmation Dialogs */}
+        {/* RESPONSE CODES TAB */}
+        {activeTab === "response_codes" && (
+          <div className="space-y-4 animate-fade-in">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <Card className="p-3 text-center">
+                <p className="text-[10px] text-muted-foreground">Taux d'Approbation</p>
+                <p className="text-lg font-display font-bold text-kpi-positive">87.2%</p>
+              </Card>
+              <Card className="p-3 text-center">
+                <p className="text-[10px] text-muted-foreground">TX Rejetées</p>
+                <p className="text-lg font-display font-bold text-kpi-negative">71 630</p>
+              </Card>
+              <Card className="p-3 text-center">
+                <p className="text-[10px] text-muted-foreground">Motif #1 d'échec</p>
+                <p className="text-sm font-display font-bold text-kpi-warning">Fonds insuffisants</p>
+              </Card>
+              <Card className="p-3 text-center">
+                <p className="text-[10px] text-muted-foreground">Alertes Fraude</p>
+                <p className="text-lg font-display font-bold text-destructive">3 000</p>
+              </Card>
+            </div>
+
+            <Card className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-display font-semibold text-card-foreground text-sm flex items-center gap-2">
+                  <XCircle size={14} className="text-kpi-negative" /> Analyse des Response Codes ISO 8583
+                </h3>
+                <ExportToolbar compact data={responseCodesData} title="Response Codes" />
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-[10px] text-muted-foreground">
+                      <th className="text-left py-2">Code</th>
+                      <th className="text-left py-2">Libellé</th>
+                      <th className="text-right py-2">Nombre TX</th>
+                      <th className="text-right py-2">% Total</th>
+                      <th className="text-center py-2">Catégorie</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {responseCodesData.map(rc => (
+                      <tr key={rc.code} className="border-b border-border/30 hover:bg-muted/30">
+                        <td className="py-2 text-xs font-mono font-bold text-primary">{rc.code}</td>
+                        <td className="py-2 text-xs text-card-foreground">{rc.libelle}</td>
+                        <td className="py-2 text-right text-xs">{rc.count.toLocaleString("fr-FR")}</td>
+                        <td className="py-2 text-right text-xs font-medium">{rc.pct}%</td>
+                        <td className="py-2 text-center">
+                          <Badge className={`text-[8px] ${rcCategorieColor(rc.categorie)}`}>{rc.categorie}</Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+
+            <Card className="p-5">
+              <h3 className="font-display font-semibold text-card-foreground text-sm mb-3">Recommandations IA — Réduction des Échecs</h3>
+              <div className="space-y-2">
+                {[
+                  { action: "Alertes SMS pré-solde bas", impact: "Réduire RC51 de ~30%", priorite: "haute" },
+                  { action: "Renouvellement proactif cartes expirées", impact: "Éliminer RC54", priorite: "haute" },
+                  { action: "Augmentation plafonds dynamiques", impact: "Réduire RC61 de ~50%", priorite: "moyenne" },
+                  { action: "Monitoring uptime émetteur", impact: "Réduire RC91 de ~80%", priorite: "moyenne" },
+                ].map((r, i) => (
+                  <div key={i} className="p-3 bg-muted/30 rounded-lg flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-medium text-card-foreground">{r.action}</p>
+                      <p className="text-[10px] text-muted-foreground">{r.impact}</p>
+                    </div>
+                    <Badge className={`text-[8px] ${r.priorite === "haute" ? "bg-kpi-negative/10 text-kpi-negative" : "bg-kpi-warning/10 text-kpi-warning"}`}>{r.priorite}</Badge>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        )}
+
+
         <AlertDialog open={showScoringConfirm} onOpenChange={setShowScoringConfirm}>
           <AlertDialogContent>
             <AlertDialogHeader>

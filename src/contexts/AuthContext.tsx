@@ -2,12 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
-export type UserRole = 
-  | "admin"
-  | "data_engineer"
-  | "data_scientist"
-  | "metier"
-  | "conformite";
+export type UserRole = "admin" | "data_engineer" | "data_scientist" | "metier" | "conformite";
 
 export interface RoleConfig {
   label: string;
@@ -26,20 +21,32 @@ export interface RoleConfig {
   };
 }
 
+const ALL_PATHS = ["/", "/porteurs-cartes", "/cycle-vie-cartes", "/audit-facturation", "/performance-tpe", "/experience-client", "/performance-ops", "/modeles-ml", "/big-data", "/rapports", "/risques", "/parametres"];
+
 export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
   admin: {
-    label: "Administrateur / RSSI",
-    description: "Supervision complète, gestion des permissions et clés de chiffrement",
-    allowedPaths: ["/", "/porteurs-cartes", "/cycle-vie-cartes", "/audit-facturation", "/performance-tpe", "/experience-client", "/performance-ops", "/modeles-ml", "/big-data", "/rapports", "/risques", "/parametres"],
+    label: "Directrice Monétique",
+    description: "Full Access — Supervision complète de l'activité monétique, rapports et exports",
+    allowedPaths: ALL_PATHS,
     permissions: {
-      canAccessRawData: false, canTrainModels: false, canManagePipelines: true,
+      canAccessRawData: true, canTrainModels: true, canManagePipelines: true,
       canViewPredictions: true, canAuditLogs: true, canManageUsers: true,
       canViewAnonymizedData: true, canModifySettings: true, canExportReports: true,
     },
   },
+  metier: {
+    label: "Analyste Monétique",
+    description: "Dashboards + Exports uniquement — Consultation et analyse des données monétiques",
+    allowedPaths: ["/", "/porteurs-cartes", "/cycle-vie-cartes", "/audit-facturation", "/performance-tpe", "/experience-client", "/rapports"],
+    permissions: {
+      canAccessRawData: false, canTrainModels: false, canManagePipelines: false,
+      canViewPredictions: true, canAuditLogs: false, canManageUsers: false,
+      canViewAnonymizedData: true, canModifySettings: false, canExportReports: true,
+    },
+  },
   data_engineer: {
     label: "Data Engineer",
-    description: "Conception et maintenance des flux d'ingestion (Apache NiFi, Oracle → Data Lakehouse)",
+    description: "Conception et maintenance des flux d'ingestion",
     allowedPaths: ["/", "/porteurs-cartes", "/cycle-vie-cartes", "/performance-tpe", "/big-data", "/performance-ops", "/parametres"],
     permissions: {
       canAccessRawData: true, canTrainModels: false, canManagePipelines: true,
@@ -49,7 +56,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
   },
   data_scientist: {
     label: "Data Scientist",
-    description: "Création et entraînement des modèles ML — données anonymisées uniquement",
+    description: "Modèles ML et données anonymisées",
     allowedPaths: ["/", "/porteurs-cartes", "/cycle-vie-cartes", "/modeles-ml", "/experience-client", "/performance-ops"],
     permissions: {
       canAccessRawData: false, canTrainModels: true, canManagePipelines: false,
@@ -57,19 +64,9 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       canViewAnonymizedData: true, canModifySettings: false, canExportReports: true,
     },
   },
-  metier: {
-    label: "Utilisateur Métier",
-    description: "Consultation en lecture seule des prédictions et tableaux de bord",
-    allowedPaths: ["/", "/porteurs-cartes", "/audit-facturation", "/performance-tpe", "/experience-client", "/rapports"],
-    permissions: {
-      canAccessRawData: false, canTrainModels: false, canManagePipelines: false,
-      canViewPredictions: true, canAuditLogs: false, canManageUsers: false,
-      canViewAnonymizedData: false, canModifySettings: false, canExportReports: false,
-    },
-  },
   conformite: {
     label: "Direction Conformité",
-    description: "Audit des accès, traçabilité et explicabilité des modèles IA",
+    description: "Audit des accès et traçabilité",
     allowedPaths: ["/", "/audit-facturation", "/risques", "/rapports", "/modeles-ml"],
     permissions: {
       canAccessRawData: false, canTrainModels: false, canManagePipelines: false,
@@ -80,10 +77,10 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
 };
 
 export const roleIcons: Record<UserRole, string> = {
-  admin: "🔐",
+  admin: "👩‍💼",
+  metier: "📊",
   data_engineer: "⚙️",
   data_scientist: "🧠",
-  metier: "📊",
   conformite: "📋",
 };
 
@@ -122,14 +119,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    // Set up auth listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-
       if (session?.user) {
-        // Use setTimeout to avoid potential deadlocks
         setTimeout(() => fetchRole(session.user.id), 0);
       } else {
         setCurrentRole("metier");
@@ -137,7 +131,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     });
 
-    // Then check existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);

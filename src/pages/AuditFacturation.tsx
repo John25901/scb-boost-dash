@@ -1,20 +1,21 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Slider } from "@/components/ui/slider";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   LineChart, Line, PieChart, Pie, Cell
 } from "recharts";
 import {
-  Receipt, AlertTriangle, CheckCircle2, TrendingDown, Search,
-  ShieldCheck, Eye, Calculator, FileWarning, DollarSign, Scale,
-  ArrowUpRight, ArrowDownRight
+  Receipt, AlertTriangle, CheckCircle2, TrendingDown,
+  ShieldCheck, Calculator, Scale, SlidersHorizontal
 } from "lucide-react";
 import AnimatedPage from "@/components/AnimatedPage";
+import FilterBar, { type FilterTag } from "@/components/FilterBar";
+import ExportToolbar from "@/components/ExportToolbar";
 
-// === COMMISSION VERIFICATION ===
 const commissionsData = [
   { flux: "Retrait DAB SCB", taux_parametre: 1.5, taux_reel: 1.5, ecart: 0, volume: 28500, statut: "OK" },
   { flux: "Retrait DAB confrère", taux_parametre: 2.0, taux_reel: 1.8, ecart: -0.2, volume: 12400, statut: "Sous-facturation" },
@@ -27,12 +28,9 @@ const commissionsData = [
 ];
 
 const manqueAGagnerMensuel = [
-  { mois: "Jan", montant: 4200, flux_concernes: 3 },
-  { mois: "Fév", montant: 3800, flux_concernes: 2 },
-  { mois: "Mar", montant: 5100, flux_concernes: 4 },
-  { mois: "Avr", montant: 3200, flux_concernes: 2 },
-  { mois: "Mai", montant: 4800, flux_concernes: 3 },
-  { mois: "Juin", montant: 5600, flux_concernes: 3 },
+  { mois: "Jan", montant: 4200 }, { mois: "Fév", montant: 3800 },
+  { mois: "Mar", montant: 5100 }, { mois: "Avr", montant: 3200 },
+  { mois: "Mai", montant: 4800 }, { mois: "Juin", montant: 5600 },
 ];
 
 const repartitionCommissions = [
@@ -41,13 +39,6 @@ const repartitionCommissions = [
   { name: "Frais de tenue", value: 18, color: "hsl(var(--kpi-warning))" },
   { name: "Interchange", value: 12, color: "hsl(var(--chart-4))" },
   { name: "International", value: 4, color: "hsl(var(--muted-foreground))" },
-];
-
-const alertesFacturation = [
-  { id: "ALR-001", type: "Sous-facturation", flux: "Retrait DAB confrère", ecart_pct: "-10%", montant_perdu: "₣2.48M", severite: "haute", date: "2026-03-28" },
-  { id: "ALR-002", type: "Sous-facturation", flux: "Paiement e-commerce", ecart_pct: "-8%", montant_perdu: "₣2.16M", severite: "haute", date: "2026-03-27" },
-  { id: "ALR-003", type: "Sous-facturation", flux: "Retrait international", ecart_pct: "-8.6%", montant_perdu: "₣576K", severite: "moyenne", date: "2026-03-26" },
-  { id: "ALR-004", type: "Anomalie volume", flux: "TX internationale Visa", ecart_pct: "+45%", montant_perdu: "—", severite: "info", date: "2026-03-25" },
 ];
 
 const reconciliationData = [
@@ -59,21 +50,40 @@ const reconciliationData = [
   { mois: "Juin", ecritures_attendues: 55200, ecritures_recues: 55120, ecart: 80, taux_matching: 99.86 },
 ];
 
-const formatCFA = (n: number) => `₣${(n / 1000).toFixed(0)}K`;
+const alertesFacturation = [
+  { id: "ALR-001", type: "Sous-facturation", flux: "Retrait DAB confrère", ecart_pct: "-10%", montant_perdu: "₣2.48M", severite: "haute", date: "2026-03-28" },
+  { id: "ALR-002", type: "Sous-facturation", flux: "Paiement e-commerce", ecart_pct: "-8%", montant_perdu: "₣2.16M", severite: "haute", date: "2026-03-27" },
+  { id: "ALR-003", type: "Sous-facturation", flux: "Retrait international", ecart_pct: "-8.6%", montant_perdu: "₣576K", severite: "moyenne", date: "2026-03-26" },
+];
 
 const AuditFacturation = () => {
-  const [selectedFlux, setSelectedFlux] = useState<string | null>(null);
+  const [filterTags, setFilterTags] = useState<FilterTag[]>([]);
+  // PNB Simulation sliders
+  const [simTauxDAB, setSimTauxDAB] = useState([1.8]);
+  const [simTauxEcom, setSimTauxEcom] = useState([2.3]);
+  const [simTauxIntl, setSimTauxIntl] = useState([3.2]);
 
+  const addTag = (tag: FilterTag) => setFilterTags(prev => prev.some(t => t.id === tag.id) ? prev : [...prev, tag]);
   const anomalies = commissionsData.filter(c => c.statut !== "OK");
   const totalManqueAGagner = manqueAGagnerMensuel.reduce((s, m) => s + m.montant, 0);
+
+  // Simulation calculations
+  const gainDAB = ((simTauxDAB[0] - 1.8) / 100) * 12400 * 820000;
+  const gainEcom = ((simTauxEcom[0] - 2.3) / 100) * 9400 * 350000;
+  const gainIntl = ((simTauxIntl[0] - 3.2) / 100) * 1800 * 1500000;
+  const totalSimGain = gainDAB + gainEcom + gainIntl;
 
   return (
     <AnimatedPage>
       <div className="p-4 lg:p-6 space-y-5">
         <div>
           <h1 className="font-display text-xl font-bold text-foreground">Audit & Facturation Monétique</h1>
-          <p className="text-xs text-muted-foreground">Vérification des commissions, détection des écarts, réconciliation comptable — Sécurisation du PNB</p>
+          <p className="text-xs text-muted-foreground">Vérification commissions, simulation PNB, réconciliation — Monnaie : FCFA (XAF)</p>
         </div>
+
+        <Card className="p-3">
+          <FilterBar tags={filterTags} onAddTag={addTag} onRemoveTag={id => setFilterTags(p => p.filter(t => t.id !== id))} onClearAll={() => setFilterTags([])} />
+        </Card>
 
         {/* KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -99,24 +109,26 @@ const AuditFacturation = () => {
         <Tabs defaultValue="commissions" className="space-y-4">
           <TabsList className="flex-wrap h-auto gap-1">
             <TabsTrigger value="commissions" className="text-xs">Vérification Commissions</TabsTrigger>
-            <TabsTrigger value="manque" className="text-xs">Manque à Gagner</TabsTrigger>
+            <TabsTrigger value="simulation" className="text-xs">🎚️ Simulation Impact PNB</TabsTrigger>
             <TabsTrigger value="alertes" className="text-xs">Alertes</TabsTrigger>
             <TabsTrigger value="reconciliation" className="text-xs">Réconciliation</TabsTrigger>
           </TabsList>
 
-          {/* COMMISSIONS */}
           <TabsContent value="commissions" className="space-y-4">
             <Card className="p-5">
-              <h3 className="font-display font-semibold text-card-foreground text-sm mb-3 flex items-center gap-2">
-                <Calculator size={14} className="text-primary" /> Comparaison Taux Paramétrés vs Réels
-              </h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-display font-semibold text-card-foreground text-sm flex items-center gap-2">
+                  <Calculator size={14} className="text-primary" /> Comparaison Taux Paramétrés vs Réels
+                </h3>
+                <ExportToolbar compact data={commissionsData} title="Commissions Monétique" />
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border text-[10px] text-muted-foreground">
                       <th className="text-left py-2">Flux Monétique</th>
-                      <th className="text-right py-2">Taux Paramétré</th>
-                      <th className="text-right py-2">Taux Réel</th>
+                      <th className="text-right py-2">Paramétré</th>
+                      <th className="text-right py-2">Réel</th>
                       <th className="text-right py-2">Écart</th>
                       <th className="text-right py-2">Volume TX</th>
                       <th className="text-center py-2">Statut</th>
@@ -129,15 +141,11 @@ const AuditFacturation = () => {
                         <td className="py-2.5 text-right text-xs">{c.taux_parametre < 100 ? `${c.taux_parametre}%` : `₣${c.taux_parametre.toLocaleString("fr-FR")}`}</td>
                         <td className="py-2.5 text-right text-xs">{c.taux_reel < 100 ? `${c.taux_reel}%` : `₣${c.taux_reel.toLocaleString("fr-FR")}`}</td>
                         <td className={`py-2.5 text-right text-xs font-medium ${c.ecart < 0 ? "text-kpi-negative" : "text-kpi-positive"}`}>
-                          {c.ecart !== 0 ? `${c.ecart > 0 ? "+" : ""}${c.ecart < 100 ? `${c.ecart}%` : `₣${c.ecart}`}` : "—"}
+                          {c.ecart !== 0 ? `${c.ecart}%` : "—"}
                         </td>
                         <td className="py-2.5 text-right text-xs">{c.volume.toLocaleString("fr-FR")}</td>
                         <td className="py-2.5 text-center">
-                          {c.statut === "OK" ? (
-                            <Badge className="text-[8px] bg-kpi-positive/10 text-kpi-positive">OK</Badge>
-                          ) : (
-                            <Badge className="text-[8px] bg-kpi-negative/10 text-kpi-negative">{c.statut}</Badge>
-                          )}
+                          <Badge className={`text-[8px] ${c.statut === "OK" ? "bg-kpi-positive/10 text-kpi-positive" : "bg-kpi-negative/10 text-kpi-negative"}`}>{c.statut}</Badge>
                         </td>
                       </tr>
                     ))}
@@ -147,80 +155,94 @@ const AuditFacturation = () => {
             </Card>
 
             <Card className="p-5">
-              <h3 className="font-display font-semibold text-card-foreground text-sm mb-1">Structure des Commissions Monétique</h3>
-              <p className="text-[10px] text-muted-foreground mb-4">Répartition du PNB monétique par flux</p>
-              <div className="flex items-center gap-6">
-                <div className="w-40 h-40">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={repartitionCommissions} cx="50%" cy="50%" innerRadius={35} outerRadius={65} dataKey="value" strokeWidth={0}>
-                        {repartitionCommissions.map((e, i) => <Cell key={i} fill={e.color} />)}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="flex-1 space-y-2">
-                  {repartitionCommissions.map(r => (
-                    <div key={r.name} className="flex items-center justify-between text-xs">
-                      <span className="flex items-center gap-2">
-                        <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: r.color }} />
-                        <span className="text-muted-foreground">{r.name}</span>
-                      </span>
-                      <span className="font-semibold text-card-foreground">{r.value}%</span>
-                    </div>
-                  ))}
-                </div>
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="font-display font-semibold text-card-foreground text-sm">Manque à Gagner Mensuel</h3>
+                <ExportToolbar compact data={manqueAGagnerMensuel} title="Manque à Gagner" />
               </div>
-            </Card>
-          </TabsContent>
-
-          {/* MANQUE À GAGNER */}
-          <TabsContent value="manque" className="space-y-4">
-            <Card className="p-5">
-              <h3 className="font-display font-semibold text-card-foreground text-sm mb-1">Manque à Gagner Mensuel</h3>
-              <p className="text-[10px] text-muted-foreground mb-4">Pertes dues aux sous-facturations détectées (en K FCFA)</p>
-              <ResponsiveContainer width="100%" height={280}>
+              <p className="text-[10px] text-muted-foreground mb-4">Pertes dues aux sous-facturations (en K FCFA)</p>
+              <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={manqueAGagnerMensuel}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="mois" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
                   <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
                   <Tooltip contentStyle={{ borderRadius: 8, fontSize: 11 }} />
-                  <Bar dataKey="montant" fill="hsl(var(--kpi-negative))" radius={[4, 4, 0, 0]} barSize={20} name="Manque à gagner (K FCFA)" />
+                  <Bar dataKey="montant" fill="hsl(var(--kpi-negative))" radius={[4, 4, 0, 0]} barSize={20} name="K FCFA" />
                 </BarChart>
               </ResponsiveContainer>
-              <div className="mt-3 p-3 bg-kpi-negative/5 border border-kpi-negative/20 rounded-lg">
-                <p className="text-[10px] text-kpi-negative font-medium">
-                  Total cumulé : ₣{(totalManqueAGagner / 1000).toFixed(1)}M de manque à gagner sur 6 mois. 
-                  Principal levier : aligner le taux réel des retraits DAB confrère (+₣2.48M/mois potentiel).
-                </p>
+            </Card>
+          </TabsContent>
+
+          {/* SIMULATION PNB */}
+          <TabsContent value="simulation" className="space-y-4">
+            <Card className="p-5 border-accent/20">
+              <h3 className="font-display font-semibold text-card-foreground text-sm mb-1 flex items-center gap-2">
+                <SlidersHorizontal size={14} className="text-accent" /> Simulation d'Impact PNB — Ajustement des Taux
+              </h3>
+              <p className="text-[10px] text-muted-foreground mb-5">
+                Simulez l'impact financier d'un réalignement des taux de commission sur les flux sous-facturés
+              </p>
+
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Retrait DAB confrère (actuel : 1.8% → paramétré : 2.0%)</span>
+                    <span className="font-bold text-accent">{simTauxDAB[0].toFixed(1)}%</span>
+                  </div>
+                  <Slider value={simTauxDAB} onValueChange={setSimTauxDAB} min={1.5} max={2.5} step={0.1} className="accent-accent" />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Paiement e-commerce (actuel : 2.3% → paramétré : 2.5%)</span>
+                    <span className="font-bold text-accent">{simTauxEcom[0].toFixed(1)}%</span>
+                  </div>
+                  <Slider value={simTauxEcom} onValueChange={setSimTauxEcom} min={2.0} max={3.0} step={0.1} />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Retrait international (actuel : 3.2% → paramétré : 3.5%)</span>
+                    <span className="font-bold text-accent">{simTauxIntl[0].toFixed(1)}%</span>
+                  </div>
+                  <Slider value={simTauxIntl} onValueChange={setSimTauxIntl} min={2.8} max={4.0} step={0.1} />
+                </div>
+              </div>
+
+              <div className="mt-6 p-4 bg-accent/5 border border-accent/20 rounded-xl">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Impact PNB estimé (annuel)</p>
+                    <p className="text-2xl font-display font-bold text-accent">
+                      {totalSimGain >= 0 ? "+" : ""}₣{(totalSimGain / 1000000).toFixed(1)}M
+                    </p>
+                  </div>
+                  <div className="text-right space-y-1">
+                    <p className="text-[10px] text-muted-foreground">DAB : {gainDAB >= 0 ? "+" : ""}₣{(gainDAB / 1000).toFixed(0)}K</p>
+                    <p className="text-[10px] text-muted-foreground">E-com : {gainEcom >= 0 ? "+" : ""}₣{(gainEcom / 1000).toFixed(0)}K</p>
+                    <p className="text-[10px] text-muted-foreground">Intl : {gainIntl >= 0 ? "+" : ""}₣{(gainIntl / 1000).toFixed(0)}K</p>
+                  </div>
+                </div>
               </div>
             </Card>
           </TabsContent>
 
-          {/* ALERTES */}
           <TabsContent value="alertes" className="space-y-4">
             <Card className="p-5">
               <h3 className="font-display font-semibold text-card-foreground text-sm mb-3">Alertes de Facturation</h3>
               <div className="space-y-2">
                 {alertesFacturation.map(a => (
                   <div key={a.id} className={`p-3 rounded-lg border ${
-                    a.severite === "haute" ? "bg-kpi-negative/5 border-kpi-negative/20" :
-                    a.severite === "moyenne" ? "bg-kpi-warning/5 border-kpi-warning/20" :
-                    "bg-muted/30 border-border"
+                    a.severite === "haute" ? "bg-kpi-negative/5 border-kpi-negative/20" : "bg-kpi-warning/5 border-kpi-warning/20"
                   }`}>
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
-                        <Badge className={`text-[8px] ${
-                          a.severite === "haute" ? "bg-kpi-negative/10 text-kpi-negative" :
-                          a.severite === "moyenne" ? "bg-kpi-warning/10 text-kpi-warning" :
-                          "bg-secondary text-muted-foreground"
-                        }`}>{a.severite}</Badge>
+                        <Badge className={`text-[8px] ${a.severite === "haute" ? "bg-kpi-negative/10 text-kpi-negative" : "bg-kpi-warning/10 text-kpi-warning"}`}>{a.severite}</Badge>
                         <span className="text-xs font-medium text-card-foreground">{a.type}</span>
                       </div>
                       <span className="text-[10px] text-muted-foreground">{a.date}</span>
                     </div>
                     <p className="text-[10px] text-muted-foreground">
-                      Flux : <strong>{a.flux}</strong> — Écart : {a.ecart_pct} — Perte estimée : {a.montant_perdu}
+                      Flux : <strong>{a.flux}</strong> — Écart : {a.ecart_pct} — Perte : {a.montant_perdu}
                     </p>
                   </div>
                 ))}
@@ -228,22 +250,23 @@ const AuditFacturation = () => {
             </Card>
           </TabsContent>
 
-          {/* RÉCONCILIATION */}
           <TabsContent value="reconciliation" className="space-y-4">
             <Card className="p-5">
-              <h3 className="font-display font-semibold text-card-foreground text-sm mb-1 flex items-center gap-2">
-                <Scale size={14} className="text-primary" /> Réconciliation Contre-tickets vs Comptabilité
-              </h3>
-              <p className="text-[10px] text-muted-foreground mb-4">Matching automatique entre fichiers retours (switch) et écritures comptables</p>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-display font-semibold text-card-foreground text-sm flex items-center gap-2">
+                  <Scale size={14} className="text-primary" /> Réconciliation Contre-tickets vs Comptabilité
+                </h3>
+                <ExportToolbar compact data={reconciliationData} title="Réconciliation" />
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border text-[10px] text-muted-foreground">
                       <th className="text-left py-2">Mois</th>
-                      <th className="text-right py-2">Écritures attendues</th>
-                      <th className="text-right py-2">Écritures reçues</th>
+                      <th className="text-right py-2">Attendues</th>
+                      <th className="text-right py-2">Reçues</th>
                       <th className="text-right py-2">Écart</th>
-                      <th className="text-right py-2">Taux Matching</th>
+                      <th className="text-right py-2">Matching</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -253,7 +276,7 @@ const AuditFacturation = () => {
                         <td className="py-2.5 text-right text-xs">{r.ecritures_attendues.toLocaleString("fr-FR")}</td>
                         <td className="py-2.5 text-right text-xs">{r.ecritures_recues.toLocaleString("fr-FR")}</td>
                         <td className="py-2.5 text-right text-xs text-kpi-negative font-medium">{r.ecart}</td>
-                        <td className="py-2.5 text-right text-xs">
+                        <td className="py-2.5 text-right">
                           <Badge className={`text-[8px] ${r.taux_matching >= 99.8 ? "bg-kpi-positive/10 text-kpi-positive" : "bg-kpi-warning/10 text-kpi-warning"}`}>
                             {r.taux_matching}%
                           </Badge>
@@ -273,7 +296,7 @@ const AuditFacturation = () => {
                   <XAxis dataKey="mois" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
                   <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" domain={[99.5, 100]} />
                   <Tooltip contentStyle={{ borderRadius: 8, fontSize: 11 }} />
-                  <Line type="monotone" dataKey="taux_matching" stroke="hsl(var(--accent))" strokeWidth={2.5} dot={{ r: 4 }} name="Taux Matching %" />
+                  <Line type="monotone" dataKey="taux_matching" stroke="hsl(var(--accent))" strokeWidth={2.5} dot={{ r: 4 }} name="Matching %" />
                 </LineChart>
               </ResponsiveContainer>
             </Card>

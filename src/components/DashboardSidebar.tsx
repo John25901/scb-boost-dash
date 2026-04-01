@@ -1,8 +1,7 @@
 import { BarChart3, Users, Brain, Settings, TrendingUp, ShieldCheck, LayoutDashboard, Database, Lock, Menu, CreditCard, Package, Receipt, Monitor } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import logo from "@/assets/logo.png";
+import { useAuth, roleIcons } from "@/contexts/AuthContext";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 
@@ -23,22 +22,24 @@ const navItems = [
 
 const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => {
   const location = useLocation();
-  const { hasAccess, user } = useAuth();
+  const { hasAccess, user, currentRole } = useAuth();
 
   const initials = user?.user_metadata?.full_name
     ? user.user_metadata.full_name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
-    : "IM";
+    : "SC";
 
-  const displayName = user?.user_metadata?.full_name || "Ingénieur ML";
+  const displayName = user?.user_metadata?.full_name || "SCB Cameroun";
 
   return (
     <>
-      <div className="p-6 border-b border-sidebar-border">
-        <div className="flex items-center gap-2.5">
-          <img src={logo} alt="SCB Logo" className="h-8 w-8 object-contain" />
+      <div className="p-5 border-b border-sidebar-border">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center shadow-lg">
+            <CreditCard size={20} className="text-accent-foreground" />
+          </div>
           <div>
-            <h1 className="font-display text-lg font-bold text-sidebar-primary">SCB Intelligence</h1>
-            <p className="text-xs text-sidebar-foreground/60">Big Data & ML Analytics</p>
+            <h1 className="font-display text-base font-bold text-sidebar-primary">SCB Monétique</h1>
+            <p className="text-[10px] text-sidebar-foreground/60">Intelligence 360°</p>
           </div>
         </div>
       </div>
@@ -58,8 +59,8 @@ const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => {
                 !allowed
                   ? "text-sidebar-foreground/30 cursor-not-allowed"
                   : isActive
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground hover:translate-x-0.5"
+                  ? "bg-accent text-accent-foreground shadow-sm"
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/20 hover:text-sidebar-foreground hover:translate-x-0.5"
               }`}
             >
               <item.icon size={16} />
@@ -71,12 +72,12 @@ const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => {
       </nav>
       <div className="p-4 border-t border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-bold text-sidebar-accent-foreground">
+          <div className="h-8 w-8 rounded-full bg-accent/20 flex items-center justify-center text-xs font-bold text-accent">
             {initials}
           </div>
           <div className="min-w-0">
             <p className="text-xs font-medium text-sidebar-primary truncate">{displayName}</p>
-            <p className="text-[10px] text-sidebar-foreground/50 truncate">{user?.email || "Projet Académique"}</p>
+            <p className="text-[10px] text-sidebar-foreground/50 truncate">{roleIcons[currentRole]} {user?.email || "Projet Académique"}</p>
           </div>
         </div>
       </div>
@@ -84,14 +85,12 @@ const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => {
   );
 };
 
-// Desktop sidebar
 export const DesktopSidebar = () => (
   <aside className="hidden lg:flex w-64 bg-sidebar text-sidebar-foreground min-h-screen flex-col shrink-0">
     <SidebarContent />
   </aside>
 );
 
-// Mobile sidebar (Sheet)
 export const MobileSidebar = () => {
   const [open, setOpen] = useState(false);
 

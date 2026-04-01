@@ -7,13 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AnimatedPage from "@/components/AnimatedPage";
+import ExportToolbar from "@/components/ExportToolbar";
 import {
   Search, User, Briefcase, Building2, Calendar, CreditCard,
   TrendingUp, AlertTriangle, CheckCircle2, Loader2, Brain,
   Phone, Mail, MapPin, Activity, ShieldCheck,
   Target, Lightbulb, Users, Sparkles, ChevronRight,
   Smartphone, Wallet, BarChart3, Zap, Send, Filter,
-  Megaphone, MessageSquare
+  Megaphone, MessageSquare, XCircle
 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,

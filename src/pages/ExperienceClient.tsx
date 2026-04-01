@@ -964,7 +964,86 @@ const ExperienceClient = () => {
           </div>
         )}
 
-        {/* Confirmation Dialogs */}
+        {/* RESPONSE CODES TAB */}
+        {activeTab === "response_codes" && (
+          <div className="space-y-4 animate-fade-in">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <Card className="p-3 text-center">
+                <p className="text-[10px] text-muted-foreground">Taux d'Approbation</p>
+                <p className="text-lg font-display font-bold text-kpi-positive">87.2%</p>
+              </Card>
+              <Card className="p-3 text-center">
+                <p className="text-[10px] text-muted-foreground">TX Rejetées</p>
+                <p className="text-lg font-display font-bold text-kpi-negative">71 630</p>
+              </Card>
+              <Card className="p-3 text-center">
+                <p className="text-[10px] text-muted-foreground">Motif #1 d'échec</p>
+                <p className="text-sm font-display font-bold text-kpi-warning">Fonds insuffisants</p>
+              </Card>
+              <Card className="p-3 text-center">
+                <p className="text-[10px] text-muted-foreground">Alertes Fraude</p>
+                <p className="text-lg font-display font-bold text-destructive">3 000</p>
+              </Card>
+            </div>
+
+            <Card className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-display font-semibold text-card-foreground text-sm flex items-center gap-2">
+                  <XCircle size={14} className="text-kpi-negative" /> Analyse des Response Codes ISO 8583
+                </h3>
+                <ExportToolbar compact data={responseCodesData} title="Response Codes" />
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-[10px] text-muted-foreground">
+                      <th className="text-left py-2">Code</th>
+                      <th className="text-left py-2">Libellé</th>
+                      <th className="text-right py-2">Nombre TX</th>
+                      <th className="text-right py-2">% Total</th>
+                      <th className="text-center py-2">Catégorie</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {responseCodesData.map(rc => (
+                      <tr key={rc.code} className="border-b border-border/30 hover:bg-muted/30">
+                        <td className="py-2 text-xs font-mono font-bold text-primary">{rc.code}</td>
+                        <td className="py-2 text-xs text-card-foreground">{rc.libelle}</td>
+                        <td className="py-2 text-right text-xs">{rc.count.toLocaleString("fr-FR")}</td>
+                        <td className="py-2 text-right text-xs font-medium">{rc.pct}%</td>
+                        <td className="py-2 text-center">
+                          <Badge className={`text-[8px] ${rcCategorieColor(rc.categorie)}`}>{rc.categorie}</Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+
+            <Card className="p-5">
+              <h3 className="font-display font-semibold text-card-foreground text-sm mb-3">Recommandations IA — Réduction des Échecs</h3>
+              <div className="space-y-2">
+                {[
+                  { action: "Alertes SMS pré-solde bas", impact: "Réduire RC51 de ~30%", priorite: "haute" },
+                  { action: "Renouvellement proactif cartes expirées", impact: "Éliminer RC54", priorite: "haute" },
+                  { action: "Augmentation plafonds dynamiques", impact: "Réduire RC61 de ~50%", priorite: "moyenne" },
+                  { action: "Monitoring uptime émetteur", impact: "Réduire RC91 de ~80%", priorite: "moyenne" },
+                ].map((r, i) => (
+                  <div key={i} className="p-3 bg-muted/30 rounded-lg flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-medium text-card-foreground">{r.action}</p>
+                      <p className="text-[10px] text-muted-foreground">{r.impact}</p>
+                    </div>
+                    <Badge className={`text-[8px] ${r.priorite === "haute" ? "bg-kpi-negative/10 text-kpi-negative" : "bg-kpi-warning/10 text-kpi-warning"}`}>{r.priorite}</Badge>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        )}
+
+
         <AlertDialog open={showScoringConfirm} onOpenChange={setShowScoringConfirm}>
           <AlertDialogContent>
             <AlertDialogHeader>

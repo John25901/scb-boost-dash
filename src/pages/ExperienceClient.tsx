@@ -155,6 +155,34 @@ const CHART_ATTRIBUTES = [
   { value: "revenu_mensuel", label: "Revenu mensuel" },
 ];
 
+// === RESPONSE CODES (Motifs d'échec TX) ===
+const responseCodesData = [
+  { code: "00", libelle: "Transaction approuvée", count: 485200, pct: 87.2, categorie: "Succès" },
+  { code: "51", libelle: "Fonds insuffisants", count: 28400, pct: 5.1, categorie: "Échec Client" },
+  { code: "05", libelle: "Ne pas honorer", count: 12800, pct: 2.3, categorie: "Échec Banque" },
+  { code: "14", libelle: "Numéro de carte invalide", count: 8500, pct: 1.5, categorie: "Échec Client" },
+  { code: "54", libelle: "Carte expirée", count: 6200, pct: 1.1, categorie: "Échec Client" },
+  { code: "61", libelle: "Dépassement plafond retrait", count: 5800, pct: 1.0, categorie: "Limite" },
+  { code: "91", libelle: "Émetteur indisponible", count: 3200, pct: 0.6, categorie: "Technique" },
+  { code: "96", libelle: "Dysfonctionnement système", count: 2100, pct: 0.4, categorie: "Technique" },
+  { code: "41", libelle: "Carte perdue", count: 1800, pct: 0.3, categorie: "Fraude" },
+  { code: "43", libelle: "Carte volée", count: 1200, pct: 0.2, categorie: "Fraude" },
+  { code: "65", libelle: "Dépassement nb retraits", count: 980, pct: 0.2, categorie: "Limite" },
+  { code: "03", libelle: "Commerçant invalide", count: 650, pct: 0.1, categorie: "Technique" },
+];
+
+const rcCategorieColor = (cat: string) => {
+  switch (cat) {
+    case "Succès": return "bg-kpi-positive/10 text-kpi-positive";
+    case "Échec Client": return "bg-kpi-warning/10 text-kpi-warning";
+    case "Échec Banque": return "bg-kpi-negative/10 text-kpi-negative";
+    case "Technique": return "bg-primary/10 text-primary";
+    case "Fraude": return "bg-destructive/10 text-destructive";
+    case "Limite": return "bg-secondary text-secondary-foreground";
+    default: return "bg-muted text-muted-foreground";
+  }
+};
+
 const ExperienceClient = () => {
   const [searchCode, setSearchCode] = useState("");
   const [client, setClient] = useState<Client | null>(null);

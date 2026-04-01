@@ -443,7 +443,8 @@ const ExperienceClient = () => {
               { key: "scoring" as const, label: "Credit Scoring IA", icon: Brain },
               { key: "campaigns" as const, label: "Campagnes Inclusion", icon: Target },
             ] : []),
-            { key: "segment" as const, label: "Analyse par Segment", icon: Users },
+          { key: "segment" as const, label: "Analyse par Segment", icon: Users },
+            { key: "response_codes" as const, label: "Response Codes", icon: XCircle },
           ]).map(tab => (
             <Button
               key={tab.key}
